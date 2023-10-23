@@ -1,0 +1,7 @@
+*.csv
+*.tsv
+*.pdf
+*.png
+*.fastq
+*.fastq.gz
+*.qza
