@@ -1,5 +1,5 @@
 {
-	"file": "https://raw.githubusercontent.com/dianahaider/size_fractions/main/phylm_all16S.csv",
+	"file": "https://raw.githubusercontent.com/dianahaider/size_fractions/main/phylm_all16S_relab.csv",
 	"name": "All 16S at phylum level",
 	"header": 0,
 	"separator": ",",
