@@ -9,7 +9,7 @@
 		{ "type": "integer", "index": 16, "name": "Rel. ab." }
 	],
 	"sets": [
-		{ "format": "binary", "start": 1, "end": 15 }
+		{ "format": "binary", "start": 1, "end": 3 }
 	]
 }
 
