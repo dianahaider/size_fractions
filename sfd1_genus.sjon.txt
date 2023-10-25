@@ -6,7 +6,7 @@
 	"skip": 0,
 	"meta": [
 		{ "type": "id", "index": 0, "name": "Name" },
-		{ "type": "integer", "index": 16, "name": "Rel. ab." }
+		{ "type": "integer", "index": 4, "name": "Rel. ab." }
 	],
 	"sets": [
 		{ "format": "binary", "start": 1, "end": 3 }
