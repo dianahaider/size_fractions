@@ -7,3 +7,6 @@
 *.qza
 *.biom
 *.qzv
+*.bib
+*.bibtex
+*.pages
