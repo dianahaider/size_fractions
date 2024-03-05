@@ -5,3 +5,5 @@
 *.fastq
 *.fastq.gz
 *.qza
+*.biom
+*.qzv
