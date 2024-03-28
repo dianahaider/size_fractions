@@ -105,7 +105,7 @@ def consolidate_tables(MG):
 
     #df.to_csv(comm+'/merged_all_tables.tsv', sep='\t', index=False)
     print("Successfully saved all tables.")
-    return df, MG
+    return df, comm
 
 
 # In[ ]:
@@ -231,6 +231,19 @@ def make_defract(all_md, separated):
 
     return newseparated
 
+def outlier(df):
+    new_df = df.copy()
+    numeric_cols = ['L', 'S', 'SL', 'W']
+
+    q1 = np.percentile(new_df[numeric_cols],25, axis=0)
+    q3 = np.percentile(new_df[numeric_cols],75, axis=0)
+    IQR = q3 - q1
+    lower_limit = q1 - (1.5*IQR)
+    upper_limit = q3 + (1.5*IQR)
+    mask = (new_df[numeric_cols] < lower_limit) | (new_df[numeric_cols] > upper_limit)
+    new_df[numeric_cols] = new_df[numeric_cols].mask(mask)
+    return new_df
+
 
 def pick_metadata(merged, depth='all', size_fraction='both', year='all', R='all', F='all', txsubset = 'all'):
 #make df of features/composition+run+comm
@@ -279,10 +292,94 @@ def pick_metadata(merged, depth='all', size_fraction='both', year='all', R='all'
     return separated
 
 
+def SRA_pairs(comm, SFX, SFY, separated, outliers='None', view=False):
+
+    depths = [1,5,10,30,60]
+
+    df_results = pd.DataFrame(columns = ['Depth', 'X', 'Y', 'Coeff', 'Pvalue', 'Rsq'],
+                             index = depths)
+#outliers has to be a list of indices to remove from separated
+    if outliers != 'None':
+        cleaned = separated.drop(outliers, axis=0)
+    else:
+        cleaned = separated.copy()
+
+    for depth in depths:
+        d1 = cleaned.loc[cleaned['depth'] == depth]
+        forpl = d1[['ratio', 'feature_id', 'sampleid', 'weekn', 'depth', 'size_code', 'Phylum', 'Family']].copy()
+        slwplot = forpl.pivot_table(index=["feature_id", "depth", 'weekn','Phylum', 'Family'], columns="size_code", values='ratio').fillna(0)
+        slwplot = slwplot.reset_index()
+
+        #build model
+        Y = slwplot[SFY]
+        X = slwplot[SFX]
+
+        X = sm.add_constant(X)
+
+        #fit the model
+        model = sm.OLS(Y, X, missing='drop')
+        model_result = model.fit()
+        model_result.summary()
+
+        sns.histplot(model_result.resid);
+        mu, std = stats.norm.fit(model_result.resid)
+        print('Residuals For depth ' + str(depth) + ': mu=' + str(mu) + 'std=' + str(std))
+
+        if view == True:
+            fig, ax = plt.subplots()
+            # plot the residuals
+            sns.histplot(x=model_result.resid, ax=ax, stat="density", linewidth=0, kde=True)
+            ax.set(title="Distribution of residuals", xlabel="residual")
+
+            # plot corresponding normal curve
+            xmin, xmax = plt.xlim() # the maximum x values from the histogram above
+            x = np.linspace(xmin, xmax, 100) # generate some x values
+            p = stats.norm.pdf(x, mu, std) # calculate the y values for the normal curve
+            sns.lineplot(x=x, y=p, color="orange", ax=ax)
+        if view == True:
+            plt.show()
+            sns.boxplot(x=model_result.resid, showmeans=True);
+            sm.qqplot(model_result.resid, line='s');
+
+        fig, ax = plt.subplots()
+        fig.set_size_inches(6, 5)
+
+        sns.set_style('white')
+        fig = sm.graphics.plot_fit(model_result,1, vlines=False, ax=ax)
+        ax.set_ylabel("Defractionated")
+        ax.set_xlabel("Whole")
+        ax.set_title("Fitted values linear regression")
+
+        plt.savefig('outputs/'+comm+'/asv_'+str(depth)+'_RL_'+SFX+SFY+'.png', dpi=200, bbox_inches="tight")
+        if view == True:
+            plt.show()
+
+        Y_max = Y.max()
+        Y_min = Y.min()
+
+        plt.figure(figsize=(5, 4))
+        ax = sns.scatterplot(x=model_result.fittedvalues, y=Y)
+        ax.set(ylim=(Y_min, Y_max))
+        ax.set(xlim=(Y_min, Y_max))
+        ax.set_xlabel("Predicted value")
+        ax.set_ylabel("Observed value")
+
+        X_ref = Y_ref = np.linspace(Y_min, Y_max, 100)
+        plt.plot(X_ref, Y_ref, color='red', linewidth=1)
+
+        plt.savefig('outputs/'+comm+'/asv_'+str(depth)+'_RL_'+SFX+SFY+'.png', dpi=200, bbox_inches="tight")
+        if view == True:
+            plt.show()
+
+        df_results.loc[depth] = [depth, SFX, SFY, model_result.params[0], model_result.pvalues[0], model_result.rsquared]
+        df_results.to_csv('outputs/'+comm+'/RL_results'+SFX+SFY+'.csv', index=False)
+
+    return df_results
+
 # In[ ]:
 
 
-def taxbarplot(separated, level, depth, topn): #separated is the df, #level is a string of taxonomic level column name, depth is an integer
+def taxbarplot(separated, level, depth, topn, palette_dict): #separated is the df, #level is a string of taxonomic level column name, depth is an integer
     sfd=separated[separated.depth==depth]
     toptaxa = sfd[['feature_id', 'feature_frequency', 'Taxon', 'size_code', 'depth','weekn', level]].copy()
     toptaxa = toptaxa.drop_duplicates()
@@ -335,12 +432,6 @@ def taxbarplot(separated, level, depth, topn): #separated is the df, #level is a
 
 
 def pcaplot(separated, depth, comm, columnperm, spc):
-
-    if comm == '16S':
-        folder = '02-PROKs'
-    else:
-        folder = '02-EUKs'
-
 
     if depth == 'all':
         df = separated.copy()
@@ -457,7 +548,7 @@ def pcaplot(separated, depth, comm, columnperm, spc):
     plt.legend(frameon=False)
     sns.move_legend(ax, "upper left", bbox_to_anchor=(1, 1))
     sns.despine()
-    plt.savefig('outputs/'+folder+'/D'+str(depth)+spc+'_PCAplot.png', dpi=200, bbox_inches="tight")
+    plt.savefig('outputs/'+comm+'/D'+str(depth)+spc+'_PCAplot.png', dpi=200, bbox_inches="tight")
     plt.clf()
     plt.cla()
     plt.close()
@@ -487,7 +578,7 @@ def pcaplot(separated, depth, comm, columnperm, spc):
     plt.xlabel('Average Loading Contribution')
     sns.despine()
     plt.legend(frameon=False)
-    plt.savefig('outputs/'+folder+'/D'+str(depth)+spc+'_PCAplot_brplot.png', dpi=200, bbox_inches="tight")
+    plt.savefig('outputs/'+comm+'/D'+str(depth)+spc+'_PCAplot_brplot.png', dpi=200, bbox_inches="tight")
     plt.clf()
     plt.cla()
     plt.close()
@@ -502,7 +593,7 @@ def pcaplot(separated, depth, comm, columnperm, spc):
     plt.legend(handles1, palette_dict_month, title='Month',
                bbox_to_anchor=(1, 1), bbox_transform=plt.gcf().transFigure, loc='upper left')
 
-    plt.savefig('outputs/'+folder+'/D'+str(depth)+spc+'_clustermap.png', dpi=200, bbox_inches="tight")
+    plt.savefig('outputs/'+comm+'/D'+str(depth)+spc+'_clustermap.png', dpi=200, bbox_inches="tight")
 
 
     return pca, pca_features, sfdclr
@@ -512,11 +603,6 @@ def pcaplot(separated, depth, comm, columnperm, spc):
 
 
 def boxplot_depth(separated, comm, depth, ycolumn, yaxislabel='def'):
-
-    if comm == '16S':
-        comm_id = '02-PROKs'
-    else:
-        comm_id = '02-EUKs'
 
     if yaxislabel != 'def':
         ycol = ycolumn
@@ -558,7 +644,7 @@ def boxplot_depth(separated, comm, depth, ycolumn, yaxislabel='def'):
     plt.xlabel('Size fraction', fontsize=20)
 
     #g.tick_params(labelsize=15)
-    plt.savefig('outputs/'+comm_id+'/D'+str(depth)+'_adboxplot.png', dpi=200, bbox_inches="tight")
+    plt.savefig('outputs/'+comm+'/D'+str(depth)+'_adboxplot.png', dpi=200, bbox_inches="tight")
     plt.clf()
     plt.cla()
     plt.close()
@@ -572,7 +658,7 @@ def boxplot_depth(separated, comm, depth, ycolumn, yaxislabel='def'):
     plt.ylabel('Number of ASVs relative to weekly average', fontsize=20)
     plt.xlabel('Week number', fontsize=20)
     sns.move_legend(ax, "upper left", bbox_to_anchor=(1, 1))
-    plt.savefig('outputs/'+comm_id+'/D'+str(depth)+'_avgbarplot.png', dpi=200, bbox_inches="tight")
+    plt.savefig('outputs/'+comm+'/D'+str(depth)+'_avgbarplot.png', dpi=200, bbox_inches="tight")
 
     plt.clf()
 
@@ -603,7 +689,7 @@ def boxplot_depth(separated, comm, depth, ycolumn, yaxislabel='def'):
     plt.xlabel('Week', fontsize=20)
     plt.legend(title='Size fraction')
     sns.move_legend(ax, "upper left", bbox_to_anchor=(1, 1))
-    plt.savefig('outputs/'+comm_id+'/D'+str(depth)+'_adlineplot.png', dpi=200, bbox_inches="tight")
+    plt.savefig('outputs/'+comm+'/D'+str(depth)+'_adlineplot.png', dpi=200, bbox_inches="tight")
 
     return anova, results
 
@@ -612,10 +698,6 @@ def boxplot_depth(separated, comm, depth, ycolumn, yaxislabel='def'):
 
 
 def upsetprep(comm, level, separated):
-    if comm == '16S':
-        comm_id = '02-PROKs'
-    else:
-        comm_id = '02-EUKs'
 
     depths = [1, 5, 10, 30, 60]
 
@@ -640,12 +722,12 @@ def upsetprep(comm, level, separated):
         resultpivot = resultpivot.fillna(0)
         resultpivot[resultpivot != 0] = 1
         tosave = pd.merge(resultpivot, cumulab1, left_index=True, right_index=True)
-        tosave.to_csv('csvs/'+comm_id+'/'+level+'_d'+str(d)+'_relab.csv')
+        tosave.to_csv('csvs/'+comm+'/'+level+'_d'+str(d)+'_relab.csv')
 
 
         #make json
         data = {
-            "file": "https://raw.githubusercontent.com/dianahaider/size_fractions/main/csvs/"+comm_id+'/'+level+'_d'+str(d)+'_relab.csv',
+            "file": "https://raw.githubusercontent.com/dianahaider/size_fractions/main/csvs/"+comm+'/'+level+'_d'+str(d)+'_relab.csv',
             "name": comm + level,
             "header": 0,
             "separator": ",",
@@ -659,7 +741,7 @@ def upsetprep(comm, level, separated):
             ]
         }
 
-        with open('json/'+comm_id+'/'+level+'_d'+str(d)+'.json', 'w') as f:
+        with open('json/'+comm+'/'+level+'_d'+str(d)+'.json', 'w') as f:
             json.dump(data, f)
 
 
@@ -668,10 +750,6 @@ def upsetprep(comm, level, separated):
 
 def plot_per_fid(comm, separated, depth, fid):
 
-    if comm == '16S':
-        comm_id = '02-PROKs'
-    else:
-        comm_id = '02-EUKs'
 
     if 'SL' in separated['size_code'].unique():
         #sizecode palette codes
@@ -700,7 +778,7 @@ def plot_per_fid(comm, separated, depth, fid):
     plt.title(ttl)
     plt.ylabel('Ratio difference')
     plt.xlabel('Week number')
-    plt.savefig('outputs/'+comm_id+'/D'+str(depth)+fid+'.png', dpi=200, bbox_inches="tight")
+    plt.savefig('outputs/'+comm+'/D'+str(depth)+fid+'.png', dpi=200, bbox_inches="tight")
 
 
 # In[ ]:
@@ -735,12 +813,7 @@ def run_ancom(separated, sfdclr, depth, ancomcol):
 
 
 subtitle = 'From Jan7 2022 to Apr27 2022'
-def plot_stackedbar_(df, labels, colors, title, subtitle, level):
-
-    if comm == '16S':
-        comm_id = '02-PROKs'
-    else:
-        comm_id = '02-EUKs'
+def plot_stackedbar_(comm, df, labels, colors, title, subtitle, level):
 
     fields = df.columns.tolist()
 
@@ -770,7 +843,7 @@ def plot_stackedbar_(df, labels, colors, title, subtitle, level):
     ax.xaxis.grid(color='gray', linestyle='dashed')
     plt.gca().invert_yaxis()
     plt.ylabel("Depth (m)")
-    plt.savefig('outputs/'+comm_id+'/'+level+'alldepths_stacked_perc_weighted.png', dpi=200, bbox_inches="tight")
+    plt.savefig('outputs/'+comm+'/'+level+'alldepths_stacked_perc_weighted.png', dpi=200, bbox_inches="tight")
     plt.show()
 
 
@@ -778,12 +851,7 @@ def plot_stackedbar_(df, labels, colors, title, subtitle, level):
 
 
 subtitle = 'From Jan7 2022 to Apr27 2022'
-def plot_stackedbar_p(df, labels, colors, title, subtitle, level):
-
-    if comm == '16S':
-        comm_id = '02-PROKs'
-    else:
-        comm_id = '02-EUKs'
+def plot_stackedbar_p(comm, df, labels, colors, title, subtitle, level):
 
     fields = df.columns.tolist()
 
@@ -813,7 +881,7 @@ def plot_stackedbar_p(df, labels, colors, title, subtitle, level):
     ax.xaxis.grid(color='gray', linestyle='dashed')
     plt.gca().invert_yaxis()
     plt.ylabel("Depth (m)")
-    plt.savefig('outputs/'+comm_id+'/'+level+'alldepths_stacked_perc_weighted.png', dpi=200, bbox_inches="tight")
+    plt.savefig('outputs/'+comm+'/'+level+'alldepths_stacked_perc_weighted.png', dpi=200, bbox_inches="tight")
     plt.show()
 
 
@@ -821,12 +889,7 @@ def plot_stackedbar_p(df, labels, colors, title, subtitle, level):
 
 
 subtitle = 'From Jan7 2022 to Apr27 2022'
-def plot_stackedbar_p(df, labels, colors, title, subtitle, level):
-
-    if comm == '16S':
-        comm_id = '02-PROKs'
-    else:
-        comm_id = '02-EUKs'
+def plot_stackedbar_p(comm, df, labels, colors, title, subtitle, level):
 
     fields = df.columns.tolist()
 
@@ -856,25 +919,21 @@ def plot_stackedbar_p(df, labels, colors, title, subtitle, level):
     ax.xaxis.grid(color='gray', linestyle='dashed')
     plt.gca().invert_yaxis()
     plt.ylabel("Depth (m)")
-    plt.savefig('outputs/'+comm_id+'/'+level+'alldepths_stacked_perc_weighted.png', dpi=200, bbox_inches="tight")
+    plt.savefig('outputs/'+comm+'/'+level+'alldepths_stacked_perc_weighted.png', dpi=200, bbox_inches="tight")
     plt.show()
 
 
 # In[ ]:
 
 
-def calcperc_defrac(comm, separated, level):
+def calcperc_defrac(comm, separated, level, dfplot_unweighted):
 
-    if comm == '16S':
-        comm_id = '02-PROKs'
-    else:
-        comm_id = '02-EUKs'
 
     depths = [1, 5, 10, 30, 60]
 
     level = level
 
-    dfplot = pd.DataFrame(columns=['Depth', 'SF', 'NSF', 'Both', 'DFr'])
+    dfplot = pd.DataFrame(columns=['Depth', 'SF', 'NSF', 'DFr', 'Both'])
 
     for d in range(len(depths)):
         sfd=separated[separated.depth==depths[d]]
@@ -924,8 +983,8 @@ def calcperc_defrac(comm, separated, level):
         dfplot.loc[d,'Depth'] = depths[d]
         dfplot.loc[d,'SF'] = SF_value
         dfplot.loc[d,'NSF'] = Wonly_value
-        dfplot.loc[d,'Both'] = Both_value
         dfplot.loc[d,'DFr'] = DFr_value
+        dfplot.loc[d,'Both'] = Both_value
 
         dfplot_unweighted.loc[d,'Depth'] = depths[d]
         dfplot_unweighted.loc[d,'SF'] = len(Lonly) + len(Sonly) + len(LS)
@@ -935,7 +994,7 @@ def calcperc_defrac(comm, separated, level):
 
         venn3(subsets = (len(Lonly), len(Sonly), len(LS), len(Wonly), len(LW), len(SW), len(LSW)), set_labels = ('Large >3μm', 'Small 3-02μm', 'Whole water <0.22μm'), alpha = 0.5);
 
-        plt.savefig("outputs/"+comm_id+"/D"+str(depths[d])+level+"_venn.png")
+        plt.savefig("outputs/"+comm+"/D"+str(depths[d])+level+"_venn.png")
         plt.clf()
         plt.cla()
         plt.close()
@@ -950,12 +1009,6 @@ def calcperc_defrac(comm, separated, level):
 
 
 def calcperc_defrac_unweighted(comm, separated, level):
-
-    if comm == '16S':
-        comm_id = '02-PROKs'
-    else:
-        comm_id = '02-EUKs'
-
     depths = [1, 5, 10, 30, 60]
 
     level = level
@@ -1017,7 +1070,7 @@ def calcperc_defrac_unweighted(comm, separated, level):
 
         venn3(subsets = (len(Lonly), len(Sonly), len(LS), len(Wonly), len(LW), len(SW), len(LSW)), set_labels = ('Large >3μm', 'Small 3-02μm', 'Whole water <0.22μm'), alpha = 0.5);
 
-        plt.savefig("outputs/"+comm_id+"/D"+str(depths[d])+level+"_venn.png")
+        plt.savefig("outputs/"+comm+"/D"+str(depths[d])+level+"_venn.png")
         plt.clf()
         plt.cla()
         plt.close()
@@ -1032,11 +1085,6 @@ def calcperc_defrac_unweighted(comm, separated, level):
 
 
 def calcperc(comm, separated, level):
-
-    if comm == '16S':
-        comm_id = '02-PROKs'
-    else:
-        comm_id = '02-EUKs'
 
     depths = [1, 5, 10, 30, 60]
 
@@ -1092,7 +1140,7 @@ def calcperc(comm, separated, level):
 
         venn3(subsets = (len(Lonly), len(Sonly), len(LS), len(Wonly), len(LW), len(SW), len(LSW)), set_labels = ('Large >3μm', 'Small 3-02μm', 'Whole water <0.22μm'), alpha = 0.5);
 
-        plt.savefig("outputs/"+comm_id+"/D"+str(depths[d])+level+"_venn.png")
+        plt.savefig("outputs/"+comm+"/D"+str(depths[d])+level+"_venn.png")
         plt.clf()
         plt.cla()
         plt.close()
@@ -1107,11 +1155,6 @@ def calcperc(comm, separated, level):
 
 
 def calcperc_SLNSF(comm, separated, level):
-
-    if comm == '16S':
-        comm_id = '02-PROKs'
-    else:
-        comm_id = '02-EUKs'
 
     depths = [1, 5, 10, 30, 60]
 
@@ -1171,7 +1214,7 @@ def calcperc_SLNSF(comm, separated, level):
 
         venn3(subsets = (len(Lonly), len(Sonly), len(LS), len(Wonly), len(LW), len(SW), len(LSW)), set_labels = ('Large >3μm', 'Small 3-02μm', 'Whole water <0.22μm'), alpha = 0.5);
 
-        plt.savefig("outputs/"+comm_id+"/D"+str(depths[d])+level+"_venn.png")
+        plt.savefig("outputs/"+comm+"/D"+str(depths[d])+level+"_venn.png")
         plt.clf()
         plt.cla()
         plt.close()
@@ -1187,11 +1230,6 @@ def calcperc_SLNSF(comm, separated, level):
 
 
 def calcperc_LSW(comm, separated, level):
-
-    if comm == '16S':
-        comm_id = '02-PROKs'
-    else:
-        comm_id = '02-EUKs'
 
     depths = [1, 5, 10, 30, 60]
 
@@ -1255,7 +1293,7 @@ def calcperc_LSW(comm, separated, level):
 
         venn3(subsets = (len(Lonly), len(Sonly), len(LS), len(Wonly), len(LW), len(SW), len(LSW)), set_labels = ('Large >3μm', 'Small 3-02μm', 'Whole water <0.22μm'), alpha = 0.5);
 
-        plt.savefig("outputs/"+comm_id+"/D"+str(depths[d])+level+"_venn.png")
+        plt.savefig("outputs/"+comm+"/D"+str(depths[d])+level+"_venn.png")
         plt.clf()
         plt.cla()
         plt.close()
@@ -1271,11 +1309,6 @@ def calcperc_LSW(comm, separated, level):
 
 
 def calcperc_LS_W(comm, separated, level):
-
-    if comm == '16S':
-        comm_id = '02-PROKs'
-    else:
-        comm_id = '02-EUKs'
 
     depths = [1, 5, 10, 30, 60]
 
@@ -1338,7 +1371,7 @@ def calcperc_LS_W(comm, separated, level):
 
         venn3(subsets = (len(Lonly), len(Sonly), len(LS), len(Wonly), len(LW), len(SW), len(LSW)), set_labels = ('Large >3μm', 'Small 3-02μm', 'Whole water <0.22μm'), alpha = 0.5);
 
-        plt.savefig("outputs/"+comm_id+"/D"+str(depths[d])+level+"_venn.png")
+        plt.savefig("outputs/"+comm+"/D"+str(depths[d])+level+"_venn.png")
         plt.clf()
         plt.cla()
         plt.close()
@@ -1354,16 +1387,12 @@ def calcperc_LS_W(comm, separated, level):
 
 
 #subtitle = 'From Jan7 2022 to Apr27 2022'
-def plot_stackedbar_p_SLNSF(df, labels, colors, title, subtitle, level, xmax=110, xtick=10):
-
-    if comm == '16S':
-        comm_id = '02-PROKs'
-    else:
-        comm_id = '02-EUKs'
+def plot_stackedbar_p_SLNSF(comm, df, labels, colors, title, subtitle, level, xmax=110, xtick=10):
 
     fields = df.columns.tolist()
 
-    name =[x for x in globals() if globals()[x] is df][0]
+    #extract the df name as a string to label the output plot of this function
+    tablelabel = f'{df=}'.split('=')[0]
 
     # figure and axis
     fig, ax = plt.subplots(1, figsize=(8, 5))
@@ -1391,5 +1420,5 @@ def plot_stackedbar_p_SLNSF(df, labels, colors, title, subtitle, level, xmax=110
     ax.xaxis.grid(color='gray', linestyle='dashed')
     plt.gca().invert_yaxis()
     plt.ylabel("Depth (m)")
-    plt.savefig('outputs/'+comm_id+'/'+level+'alldepths_stacked_perc_weighted'+name+'.png', dpi=200, bbox_inches="tight")
+    plt.savefig('outputs/'+comm+'/'+level+'alldepths_stacked_perc_weighted'+ tablelabel +'.png', dpi=200, bbox_inches="tight")
     plt.show()
