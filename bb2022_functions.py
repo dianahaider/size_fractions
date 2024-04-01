@@ -599,7 +599,159 @@ def pcaplot(separated, depth, comm, columnperm, spc):
     return pca, pca_features, sfdclr
 
 
-# In[ ]:
+
+def save_all4_plots(comm,depth,fid,newseparated):
+    sizecodes = ['S', 'L', 'W', 'SL']
+    palette_colors = sns.color_palette()
+    palette_dict = {sizecode: color for sizecode, color in zip(sizecodes, palette_colors)}
+
+    sfd=newseparated[newseparated.depth==depth]
+    sfd['weekfid'] = sfd["weekn"].astype(str) + sfd["feature_id"].astype(str)
+    sfd['avg_p_id'] = sfd['ratio'].groupby(sfd['weekfid']).transform('mean')
+    sfd['diff_p_id'] = sfd['ratio'] - sfd['avg_p_id']
+
+    sfd_f=sfd[sfd.feature_id==fid]
+
+    tax = sfd.loc[sfd["feature_id"] == fid].iloc[0]["Taxon"]
+    rk = sfd.loc[sfd["feature_id"] == fid].iloc[0]["rank"]
+
+    ttl = sfd_f['Taxon'].iloc[0]
+
+    sns.set(rc={"figure.figsize":(9, 4)})
+    sns.set_style("ticks")
+    plt.subplot(221)
+    ax=sns.lineplot(data=sfd_f, x="weekn", y="diff_p_id", hue="size_code", palette=palette_dict)#, hue="size_code")
+    plt.legend(title='Size code')
+    ax.legend([],[], frameon=False)
+
+    plt.ylabel('ΔRA per week')
+    plt.xlabel('Week number')
+
+
+    sfd_f['SCfid'] = sfd_f["size_code"].astype(str) + sfd_f["feature_id"].astype(str)
+    sfd_f['avg_p_sc'] = sfd_f['ratio'].groupby(sfd_f['SCfid']).transform('mean')
+    sfd_f['diff_p_sc'] = sfd_f['ratio'] - sfd_f['avg_p_sc']
+
+
+    sns.set_style("ticks")
+    plt.subplot(222)
+    ax=sns.lineplot(data=sfd_f, x="weekn", y="diff_p_sc", hue="size_code", palette=palette_dict)#, hue="size_code")
+    plt.legend(title='Size code')
+    sns.move_legend(ax, "upper left", bbox_to_anchor=(1, 1), frameon=False)
+
+    plt.ylabel('ΔRA per size fraction')
+    plt.xlabel('Week number')
+
+
+    sns.set_style("ticks")
+    plt.subplot(223)
+    ax = sns.lineplot(data = sfd_f, x='weekn', y='ratio', hue='size_code', palette=palette_dict)#, style='size_code')
+    plt.legend(title='Size code')
+    ax.legend([],[], frameon=False)
+    #sns.despine()
+
+    plt.ylabel('Relative abundance', fontsize=12)
+    plt.xlabel('Time (week)', fontsize=12)
+
+
+    sns.set_style("ticks")
+    plt.subplot(224)
+    ax = sns.lineplot(data = sfd_f, x='weekn', y='ranktot', hue='size_code', palette=palette_dict)#, style='size_code')
+    plt.legend(title='Size code')
+    ax.legend([],[], frameon=False)
+    plt.ylim(reversed(plt.ylim()))
+    #sns.despine()
+
+    plt.ylabel('Rank', fontsize=12)
+    plt.xlabel('Time (week)', fontsize=12)
+    plt.tight_layout()
+
+    plt.savefig('outputs/'+comm+'/D'+str(depth)+'_lineplot'+ fid +'allplots.png', dpi=200, bbox_inches="tight")
+
+
+def save_individual_plots(comm,depth,fid,newseparated):
+
+    sizecodes = ['S', 'L', 'W', 'SL']
+    palette_colors = sns.color_palette()
+    palette_dict = {sizecode: color for sizecode, color in zip(sizecodes, palette_colors)}
+
+    sfd=newseparated[newseparated.depth==depth]
+    sfd['weekfid'] = sfd["weekn"].astype(str) + sfd["feature_id"].astype(str)
+    sfd['avg_p_id'] = sfd['ratio'].groupby(sfd['weekfid']).transform('mean')
+    sfd['diff_p_id'] = sfd['ratio'] - sfd['avg_p_id']
+
+    sfd_f=sfd[sfd.feature_id==fid]
+
+    tax = sfd.loc[sfd["feature_id"] == fid].iloc[0]["Taxon"]
+    rk = sfd.loc[sfd["feature_id"] == fid].iloc[0]["rank"]
+
+    ttl = sfd_f['Taxon'].iloc[0]
+
+    sns.set(rc={"figure.figsize":(7, 4)})
+    sns.set_style("ticks")
+    ax=sns.lineplot(data=sfd_f, x="weekn", y="diff_p_id", hue="size_code", palette=palette_dict)#, hue="size_code")
+    plt.legend(title='Size code')
+    sns.move_legend(ax, "upper left", bbox_to_anchor=(1, 1), frameon=False)
+
+    plt.title(ttl)
+    plt.ylabel('ΔRA per week')
+    plt.xlabel('Week number')
+    plt.savefig('outputs/'+comm+'/D'+str(depth)+fid+'avg_per_week.png', dpi=200, bbox_inches="tight")
+    plt.clf()
+    plt.cla()
+    plt.close()
+
+
+    sfd_f['SCfid'] = sfd_f["size_code"].astype(str) + sfd_f["feature_id"].astype(str)
+    sfd_f['avg_p_sc'] = sfd_f['ratio'].groupby(sfd_f['SCfid']).transform('mean')
+    sfd_f['diff_p_sc'] = sfd_f['ratio'] - sfd_f['avg_p_sc']
+
+
+    sns.set(rc={"figure.figsize":(7, 4)})
+    sns.set_style("ticks")
+    ax=sns.lineplot(data=sfd_f, x="weekn", y="diff_p_sc", hue="size_code", palette=palette_dict)#, hue="size_code")
+    plt.legend(title='Size code')
+    sns.move_legend(ax, "upper left", bbox_to_anchor=(1, 1), frameon=False)
+
+    plt.title(ttl)
+    plt.ylabel('ΔRA per size fraction')
+    plt.xlabel('Week number')
+    plt.savefig('outputs/'+comm+'/D'+str(depth)+fid+'_avg_per_SC.png', dpi=200, bbox_inches="tight")
+    plt.clf()
+    plt.cla()
+    plt.close()
+
+
+    sns.set(rc={"figure.figsize":(7, 4)})
+    sns.set_style("ticks")
+    ax = sns.lineplot(data = sfd_f, x='weekn', y='ratio', hue='size_code', palette=palette_dict)#, style='size_code')
+    plt.legend(title='Size code')
+    sns.move_legend(ax, "upper left", bbox_to_anchor=(1, 1), frameon=False)
+    #sns.despine()
+
+    plt.ylabel('Relative abundance', fontsize=12)
+    plt.xlabel('Time (week)', fontsize=12)
+    plt.title('Relative abundance of '+ tax + '('+ str(rk) +')')
+
+    plt.savefig('outputs/'+comm+'/D'+str(depth)+'_lineplot'+ tax +'RA.png', dpi=200, bbox_inches="tight")
+    plt.clf()
+    plt.cla()
+    plt.close()
+
+
+    sns.set(rc={"figure.figsize":(7, 4)})
+    sns.set_style("ticks")
+    ax = sns.lineplot(data = sfd_f, x='weekn', y='ranktot', hue='size_code', palette=palette_dict)#, style='size_code')
+    plt.legend(title='Size code')
+    sns.move_legend(ax, "upper left", bbox_to_anchor=(1, 1), frameon=False)
+    plt.ylim(reversed(plt.ylim()))
+    #sns.despine()
+
+    plt.ylabel('Rank', fontsize=12)
+    plt.xlabel('Time (week)', fontsize=12)
+    plt.title('Relative abundance of '+ tax + '('+ str(rk) +')')
+
+    plt.savefig('outputs/'+comm+'/D'+str(depth)+'_lineplot'+ tax +'RANK.png', dpi=200, bbox_inches="tight")
 
 
 def boxplot_depth(separated, comm, depth, ycolumn, yaxislabel='def'):
@@ -773,7 +925,7 @@ def plot_per_fid(comm, separated, depth, fid):
     ttl = sfd_f['Taxon'].iloc[0]
 
     sns.set(rc={"figure.figsize":(7, 3)})
-    ax=sns.barplot(data=sfd_f, x="weekn", y="diff_p_id", hue="size_code", palette=palette_dict)#, hue="size_code")
+    ax=sns.lineplot(data=sfd_f, x="weekn", y="diff_p_id", hue="size_code", palette=palette_dict)#, hue="size_code")
     sns.move_legend(ax, "upper left", bbox_to_anchor=(1, 1))
     plt.title(ttl)
     plt.ylabel('Ratio difference')

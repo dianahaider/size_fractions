@@ -12,4 +12,5 @@
 *.bibtex
 *.pages
 *.RData
-.*Rhistory
+*.Rhistory
+*.fasta
