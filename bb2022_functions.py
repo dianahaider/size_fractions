@@ -848,6 +848,53 @@ def boxplot_depth(separated, comm, depth, ycolumn, yaxislabel='def'):
 
 # In[ ]:
 
+def subplots(comm, depth, fids, pltyp, newseparated):
+    sizecodes = ['S', 'L', 'W', 'SL']
+    palette_colors = sns.color_palette()
+    palette_dict = {sizecode: color for sizecode, color in zip(sizecodes, palette_colors)}
+
+    fig, ax = plt.subplots(len(fids), 1, sharex=True)
+    plt.subplots_adjust(wspace=0, hspace=0)
+
+    d1 = newseparated[newseparated.depth == d]
+
+    sns.set(rc={"figure.figsize":(4, 7)})
+    sns.set_style("ticks")
+
+
+    for i in range(len(fids)):
+        d1_fid = d1[d1.feature_id == fids[i]]
+        ttl = d1.loc[d1["feature_id"] == fids[i]].iloc[0]["Genus"]
+
+        d1_fid['SCfid'] = d1_fid["size_code"].astype(str) + d1_fid["feature_id"].astype(str)
+        d1_fid['avg_p_sc'] = d1_fid['ratio'].groupby(d1_fid['SCfid']).transform('mean')
+        d1_fid['diff_p_sc'] = d1_fid['ratio'] - d1_fid['avg_p_sc']
+
+        d1_fid['weekfid'] = d1_fid["weekn"].astype(str) + d1_fid["feature_id"].astype(str)
+        d1_fid['avg_p_id'] = d1_fid['ratio'].groupby(d1_fid['weekfid']).transform('mean')
+        d1_fid['diff_p_id'] = d1_fid['ratio'] - d1_fid['avg_p_id']
+
+        #pick plot type
+        if pltyp == 1:
+            ax1=sns.lineplot(data=d1_fid, x="weekn", y="diff_p_sc", hue="size_code", palette=palette_dict, ax=ax[i])
+        if pltyp == 2:
+            ax1=sns.lineplot(data=d1_fid, x="weekn", y="diff_p_id", hue="size_code", palette=palette_dict, ax=ax[i])
+        if pltyp == 3:
+            ax1 = sns.lineplot(data = d1_fid, x='weekn', y='ratio', hue='size_code', palette=palette_dict, ax=ax[i])
+        if pltyp == 4:
+            ax1 = sns.lineplot(data = d1_fid, x='weekn', y='ranktot', hue='size_code', palette=palette_dict, ax=ax[i]) #
+
+        ax1.tick_params(bottom=False)
+        ax1.set(ylabel=None)
+        ax1.get_legend().remove()
+        ax1.set_ylabel(ttl, rotation=0, labelpad=85)
+
+        for _,s in ax1.spines.items():
+            s.set_linewidth(0.5)
+            s.set_color('grey')
+
+    plt.savefig('outputs/'+comm+'/D'+str(depth)+'_lineplots'+ str(pltyp) +'.png', dpi=200, bbox_inches="tight")
+
 
 def upsetprep(comm, level, separated):
 
@@ -1242,7 +1289,7 @@ def calcperc(comm, separated, level):
 
     level = level
 
-    dfplot = pd.DataFrame(columns=['Depth', 'SF', 'NSF', 'Both'])
+    dfplot = pd.DataFrame(columns=['Depth', 'Sonly', 'Lonly', 'LS', 'NSF'])
 
     for d in range(len(depths)):
         sfd=separated[separated.depth==depths[d]]
@@ -1285,7 +1332,9 @@ def calcperc(comm, separated, level):
         LS_value = LS.to_numpy().sum()/total *100
 
         dfplot.loc[d,'Depth'] = depths[d]
-        dfplot.loc[d,'SF'] = SF_value
+        dfplot.loc[d,'Sonly'] = Sonly_value
+        dfplot.loc[d,'Lonly'] = Lonly_value
+        dfplot.loc[d,'LS'] = LS_value
         dfplot.loc[d,'NSF'] = Wonly_value
         dfplot.loc[d,'Both'] = Both_value
 
