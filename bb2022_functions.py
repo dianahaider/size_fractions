@@ -21,6 +21,7 @@ import seaborn as sns
 #sns.set(style="whitegrid")
 import plotly.express as px
 from IPython.display import display
+from sklearn.ensemble import IsolationForest
 
 from pandas.plotting import register_matplotlib_converters
 from mpl_toolkits.mplot3d import Axes3D
@@ -379,7 +380,7 @@ def SRA_pairs(comm, SFX, SFY, separated, outliers='None', view=False):
 # In[ ]:
 
 
-def taxbarplot(separated, level, depth, topn, palette_dict): #separated is the df, #level is a string of taxonomic level column name, depth is an integer
+def taxbarplot(separated, level, depth, topn, palette_dict, colrow): #separated is the df, #level is a string of taxonomic level column name, depth is an integer
     sfd=separated[separated.depth==depth]
     toptaxa = sfd[['feature_id', 'feature_frequency', 'Taxon', 'size_code', 'depth','weekn', level]].copy()
     toptaxa = toptaxa.drop_duplicates()
@@ -414,11 +415,18 @@ def taxbarplot(separated, level, depth, topn, palette_dict): #separated is the d
                      "weekn": "w"}, color_discrete_map=palette_dict)
     fig.update_xaxes(type='category', dtick=1)
     fig.update_layout(
-        title="Relative abundance of top 10" + level + 'observed at Depth' + str(depth),
+        #title= text="Relative abundance of top"+str(topn) + level + 'observed at Depth' + str(depth),
         yaxis_title="Relative abundance",
         xaxis_title="Size fraction",
         legend_title=level,
-        font=dict(size=8)
+        font=dict(size=8),
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
+            y=1.02,
+            xanchor="right",
+            x=1
+        )
     )
 
     fig.show()
@@ -431,7 +439,7 @@ def taxbarplot(separated, level, depth, topn, palette_dict): #separated is the d
 # In[ ]:
 
 
-def pcaplot(separated, depth, comm, columnperm, spc):
+def pcaplot(separated, depth, comm, columnperm, spc, colrow):
 
     if depth == 'all':
         df = separated.copy()
@@ -458,15 +466,28 @@ def pcaplot(separated, depth, comm, columnperm, spc):
         seriescr = pd.Series(color_rows_sc)
 
     #month palette code
-    df['Month'] = df['date'].str.split('-').str[1]
-    months = ['Jan', 'Feb', 'Mar', 'May', 'Apr']
-    palette_colors = sns.color_palette("flare")
-    palette_dict_month = {monthname: color for monthname, color in zip(months, palette_colors)}
-    dic = pd.Series(df.Month.values,index=df.sampleid).to_dict()
-    color_rows_month = {k: palette_dict_month[v] for k, v in dic.items()}
-    seriesmonthcr = pd.Series(color_rows_month)
+    if colrow == 'Month':
+        df['Month'] = df['date'].str.split('-').str[1]
+        months = ['Jan', 'Feb', 'Mar', 'May', 'Apr']
+        palette_colors = sns.color_palette("flare")
+        palette_dict_month = {monthname: color for monthname, color in zip(months, palette_colors)}
+        dic = pd.Series(df.Month.values,index=df.sampleid).to_dict()
+        color_rows_month = {k: palette_dict_month[v] for k, v in dic.items()}
+        seriesmonthcr = pd.Series(color_rows_month)
+        dfcolors = pd.DataFrame({'Month': seriesmonthcr,'Size code':seriescr})
 
-    dfcolors = pd.DataFrame({'Month': seriesmonthcr,'Size code':seriescr})
+    else:
+        df['weekn2'] = df['weekn'].astype(str)
+        weeks = list(df['weekn'].unique())
+        weeks.sort()
+        weeks = [str(x) for x in weeks]
+        palette_colors = sns.color_palette("flare", 16)
+        palette_dict_weekn = {weekname: color for weekname, color in zip(weeks, palette_colors)}
+        dic = pd.Series(df.weekn2.values,index=df.sampleid).to_dict()
+        color_rows_weekn = {k: palette_dict_weekn[v] for k, v in dic.items()}
+        seriesweekn = pd.Series(color_rows_weekn)
+        dfcolors = pd.DataFrame({'Weekn': seriesweekn, 'Size code': seriescr})
+
 
     topiv = df[['feature_id', 'feature_frequency', 'sampleid']].copy()
     topiv = topiv.drop_duplicates()
@@ -588,17 +609,125 @@ def pcaplot(separated, depth, comm, columnperm, spc):
     ax = sns.clustermap(distance_matrix, method="complete", cmap='RdBu', annot=True,
                yticklabels=True, row_colors = dfcolors,
                annot_kws={"size": 7}, figsize=(15,12));
+    if colrow == 'Month':
+        handles1 = [Patch(facecolor=palette_dict_month[key]) for key in palette_dict_month]
+        plt.legend(handles1, palette_dict_month, title='Month',
+                   bbox_to_anchor=(1, 1), bbox_transform=plt.gcf().transFigure, loc='upper left')
 
-    handles1 = [Patch(facecolor=palette_dict_month[key]) for key in palette_dict_month]
-    plt.legend(handles1, palette_dict_month, title='Month',
-               bbox_to_anchor=(1, 1), bbox_transform=plt.gcf().transFigure, loc='upper left')
+    else:
+        handles1 = [Patch(facecolor=palette_dict_weekn[key]) for key in palette_dict_weekn]
+        plt.legend(handles1, palette_dict_weekn, title='Week',
+                bbox_to_anchor=(1, 1), bbox_transform=plt.gcf().transFigure, loc='upper left')
+
 
     plt.savefig('outputs/'+comm+'/D'+str(depth)+spc+'_clustermap.png', dpi=200, bbox_inches="tight")
 
 
-    return pca, pca_features, sfdclr
+    return pca, pca_features, sfdclr, distance_matrix
+
+def roll_avg(comm, table, depth, col, rollingavg=4):
+    new2 = table.set_index('weekn')
+    new2.sort_index(ascending=True, inplace=True)
+    new2 = new2[new2['depth'] == depth]
+    analysis = new2[[col, 'size_code']].copy()
+
+    sizecodes = ['S', 'L', 'SL', 'W']
+    for sizecode in sizecodes:
+        df1 = analysis[analysis['size_code'] == sizecode]
+        df1.drop('size_code', axis=1, inplace=True)
+        df1.drop_duplicates(inplace=True)
+
+        rolling_mean = df1.rolling(rollingavg).mean()
+        rolling_std = df1.rolling(rollingavg).std()
+
+        plt.clf()
+        plt.plot(df1, color="blue",label="nASVs")
+        plt.plot(rolling_mean, color="red", label="Rolling Mean")
+        plt.plot(rolling_std, color="black", label = "Rolling Standard Deviation")
+
+        plt.ylabel('nASVs')
+        plt.xlabel('Time (week)')
+        plt.title('Rolling mean nASVs at depth' + str(depth) + 'm and size' + sizecode , loc='left', weight='bold')
+        #plt.legend(frameon=False)
+
+        plt.savefig('outputs/'+comm+'/D'+str(depth)+sizecode+'_rollavg.png', dpi=200, bbox_inches="tight")
+
+    #get one plot of the average of all size fractions
+    df1 = analysis.drop('size_code', axis=1) #drop the SF identifier
+    df1['mean_col'] = df1.groupby(df1.index)['nASVs'].mean() #take the average of all fractions per week
+
+    df1.drop('nASVs', axis=1, inplace=True)
+    df1.drop_duplicates(inplace=True)
+
+    rolling_mean = df1.rolling(rollingavg).mean()
+    rolling_std = df1.rolling(rollingavg).std()
+
+    plt.clf()
+    plt.plot(df1, color="blue",label="nASVs")
+    plt.plot(rolling_mean, color="red", label="Rolling Mean")
+    plt.plot(rolling_std, color="black", label = "Rolling Standard Deviation")
+
+    plt.ylabel('nASVs')
+    plt.xlabel('Time (week)')
+    plt.title('Rolling mean nASVs at depth' + str(depth) + 'm and all fractions', loc='left', weight='bold')
+    #plt.legend(frameon=False)
+
+    plt.savefig('outputs/'+comm+'/D'+str(depth)+'_rollavg.png', dpi=200, bbox_inches="tight")
+
+    analysis['weekn'] = analysis.index
+    analysis.drop_duplicates(inplace=True)
+    plt.clf()
+    sizecodes = ['S', 'L', 'W', 'SL']
+    palette_colors = sns.color_palette()
+    palette_dict = {sizecode: color for sizecode, color in zip(sizecodes, palette_colors)}
+    ax = sns.lmplot(x ='weekn', y ='nASVs', data = analysis, hue ='size_code', palette=palette_dict, legend=False)
+    plt.ylabel('nASVs')
+    plt.xlabel('Time (week)')
+    plt.title('Trend of nASVs at depth' + str(depth), loc='left', weight='bold')
+
+    plt.savefig('outputs/'+comm+'/D'+str(depth)+'_nasvtrend.png', dpi=200, bbox_inches="tight")
 
 
+def detect_anomalies(metadata, df, dpt, yr=all, month=all):
+
+    sfd=df[df.depth==dpt]
+
+    md_col = sfd[['event_id', metadata, "year", "month"]].copy()
+    md_col = md_col[md_col[metadata].notna()]
+    if yr != all:
+        #mdcol_yr = md_col[md_col.Year == yr]
+        mdcol_yr = md_col[md_col['year'].isin(yr)]
+    else:
+        mdcol_yr = md_col
+
+    if month != all:
+        #mdcol_yr = mdcol_yr[mdcol_yr.Month == month]
+        mdcol_yr = mdcol_yr[mdcol_yr['month'].isin(month)]
+
+    mdcol_yr = mdcol_yr.drop(columns=['year', "month"])
+    mdcol_yr = mdcol_yr.set_index(['event_id'])
+
+    #modelling time
+    outliers_fraction = float(.01)
+    scaler = StandardScaler()
+    np_scaled = scaler.fit_transform(mdcol_yr.values.reshape(-1, 1))
+    data = pd.DataFrame(np_scaled)
+    # train isolation forest
+    model =  IsolationForest(contamination=outliers_fraction)
+    model.fit(data)
+
+    #predict data
+    mdcol_yr['anomaly'] = model.predict(data)
+
+    # visualization
+    fig, ax = plt.subplots(figsize=(10,6))
+    a = mdcol_yr.loc[mdcol_yr['anomaly'] == -1, [metadata]] #anomaly
+    ax.plot(mdcol_yr.index, mdcol_yr[metadata], color='black', label = 'Normal')
+    ax.scatter(a.index,a[metadata], color='red', label = 'Anomaly')
+    #plt.axvline(36, ls='--')
+    plt.legend()
+    plt.show();
+    #add axes names
 
 def save_all4_plots(comm,depth,fid,newseparated):
     sizecodes = ['S', 'L', 'W', 'SL']
@@ -759,8 +888,10 @@ def boxplot_depth(separated, comm, depth, ycolumn, yaxislabel='def'):
     if yaxislabel != 'def':
         ycol = ycolumn
 
-    #sfd=separated[separated.depth==depth]
-    sfd = separated.copy()
+    if depth == 'all':
+        sfd = separated.copy()
+    else:
+        sfd=separated[separated.depth==depth]
 
     #sfd_S = sfd[['size_code', 'nASVs', 'weekn']].copy()
     #sfd_S = sfd_S.drop_duplicates()
@@ -856,7 +987,7 @@ def subplots(comm, depth, fids, pltyp, newseparated):
     fig, ax = plt.subplots(len(fids), 1, sharex=True)
     plt.subplots_adjust(wspace=0, hspace=0)
 
-    d1 = newseparated[newseparated.depth == d]
+    d1 = newseparated[newseparated.depth == depth]
 
     sns.set(rc={"figure.figsize":(4, 7)})
     sns.set_style("ticks")
@@ -864,7 +995,10 @@ def subplots(comm, depth, fids, pltyp, newseparated):
 
     for i in range(len(fids)):
         d1_fid = d1[d1.feature_id == fids[i]]
-        ttl = d1.loc[d1["feature_id"] == fids[i]].iloc[0]["Genus"]
+        if comm == 'chloroplast':
+            ttl = d1.loc[d1["feature_id"] == fids[i]].iloc[0]["PRSpecies"]
+        else:
+            ttl = d1.loc[d1["feature_id"] == fids[i]].iloc[0]["Genus"]
 
         d1_fid['SCfid'] = d1_fid["size_code"].astype(str) + d1_fid["feature_id"].astype(str)
         d1_fid['avg_p_sc'] = d1_fid['ratio'].groupby(d1_fid['SCfid']).transform('mean')
@@ -983,7 +1117,7 @@ def plot_per_fid(comm, separated, depth, fid):
 # In[ ]:
 
 
-def run_ancom(separated, sfdclr, depth, ancomcol):
+def run_ancom(comm, separated, sfdclr, depth, ancomcol):
 
     sfd=separated[separated.depth==depth]
 
@@ -995,17 +1129,22 @@ def run_ancom(separated, sfdclr, depth, ancomcol):
     results = ancom(table=sfdclr, grouping=df_ancom[ancomcol])
 
     DAresults = results[0].copy()
-    DARejected_SC = DAresults.loc[DAresults['Reject null hypothesis'] == True]
+
+    if comm == 'chloroplast':
+        taxonomy = sfd[['feature_id', 'PRConfidence', 'PRTaxon', 'PRSpecies']].copy()
+        taxonomy = taxonomy.drop_duplicates()
+    else:
+        taxonomy = sfd[['feature_id', 'Confidence', 'Taxon', 'Phylum', 'Class', 'Family', 'Genus', 'Species']].copy()
+        taxonomy = taxonomy.drop_duplicates()
+    DAtaxonomy = pd.merge(DAresults, taxonomy, on="feature_id", how="left")
+
+    DARejected_SC = DAtaxonomy.loc[DAtaxonomy['Reject null hypothesis'] == True]
     DARejected_SC.sort_values(by=['W'])
 
-    taxonomy = sfd[['feature_id', 'Confidence', 'Taxon', 'Phylum', 'Class', 'Family', 'Genus', 'Species']].copy()
-    taxonomy = taxonomy.drop_duplicates()
-    DARejected_SC_taxonomy = pd.merge(DARejected_SC, taxonomy, on="feature_id", how="left")
-    DARejected_SC_taxonomy.sort_values(by='W')
 
     prcentile = results[1].copy()
 
-    return DARejected_SC_taxonomy, prcentile
+    return DAtaxonomy, DARejected_SC, prcentile
 
 
 # In[ ]:
@@ -1291,7 +1430,35 @@ def calcperc(comm, separated, level):
 
     dfplot = pd.DataFrame(columns=['Depth', 'Sonly', 'Lonly', 'LS', 'NSF'])
 
+    #save venn of all depths together
+    toptaxa = separated[[level, 'feature_frequency', 'Taxon', 'size_code', 'weekn']].copy()
+
+    toptaxa = toptaxa.drop_duplicates()
+    df_agg = toptaxa.groupby(['size_code',level]).agg({'feature_frequency':sum})
+
+    df_agg = df_agg.reset_index()
+    resultpivot = df_agg.pivot_table(index=level, columns='size_code', values='feature_frequency')
+    resultpivot = resultpivot.fillna(0)
+
+    df = resultpivot.copy()
+
+    Sonly = df[(df['L'] == 0) & (df['W'] == 0)]
+    Wonly = df[(df['L'] == 0) & (df['S'] == 0)]
+    Lonly = df[(df['S'] == 0) & (df['W'] == 0)]
+    LW = df[(df['S'] == 0) & (df['W'] != 0) & (df['L'] != 0)]
+    LS = df[(df['W'] == 0) & (df['S'] != 0) & (df['L'] != 0)]
+    SW = df[(df['W'] != 0) & (df['S'] != 0) & (df['L'] == 0)]
+    LSW = df[~(df == 0).any(axis=1)]
+
+    venn3(subsets = (len(Lonly), len(Sonly), len(LS), len(Wonly), len(LW), len(SW), len(LSW)), set_labels = ('Large >3μm', 'Small 3-02μm', 'Whole water <0.22μm'), alpha = 0.5);
+    plt.savefig("outputs/"+comm+"/alldepths_"+level+"_venn.png")
+    plt.clf()
+    plt.cla()
+    plt.close()
+
     for d in range(len(depths)):
+
+
         sfd=separated[separated.depth==depths[d]]
         toptaxa = sfd[[level, 'feature_frequency', 'Taxon', 'size_code', 'weekn']].copy()
 
