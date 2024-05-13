@@ -6,12 +6,17 @@ library(devtools)
 library(ape)
 library(vegan)
 library(pairwiseAdonis)
+library(phyloseq)
+install.packages("remotes")
+remotes::install_github("Russel88/MicEco")
+library(MicEco)
 
 # The root directory of the analysis
 
-directory = "~/Documents/escuela/phd/size_fractions/"
-infile = "distance_matrix_60m16s.tsv"
+directory = "~/Documents/escuela/phd/size_fractions/outputs/02-EUKs/"
+infile = "distance_matrix_d1.tsv"
 outfile = "PCoA-plt60m16s.png"
+
 
 # Load the distance matrix
 # Assuming the distance matrix is saved in a file named "distance_matrix.tsv"
@@ -52,17 +57,16 @@ plot(pcoa_result$vectors[,1], pcoa_result$vectors[,2],
               (ceiling(max(pcoa_result$vectors[,1])) - floor(min(pcoa_result$vectors[,1]))) / 0.2),
      yaxp = c(floor(min(pcoa_result$vectors[,2])), ceiling(max(pcoa_result$vectors[,2])),
               (ceiling(max(pcoa_result$vectors[,2])) - floor(min(pcoa_result$vectors[,2]))) / 0.2))
-
 # Add gridlines
 abline(h = yvalues, col = "gray", lty = "dotted")
 abline(v = xvalues, col = "gray", lty = "dotted")
 
-type_colors = c("#4477AA","#EE7733","#BBBBBB", "black")
+type_colors = c("#4477AA","#EE7733","#BBBBBB", "ALack")
 
 # Add points based on the ending character of labels
-colors <- ifelse(grepl("DS$", rownames(pcoa_result$vectors)), type_colors[1],
-                 ifelse(grepl("DL$", rownames(pcoa_result$vectors)), type_colors[2],
-                        ifelse(grepl("DSL", rownames(pcoa_result$vectors)), type_colors[3], "black"))) # "black" as a default, just in case
+colors <- ifelse(grepl("AS$", rownames(pcoa_result$vectors)), type_colors[1],
+                 ifelse(grepl("AL$", rownames(pcoa_result$vectors)), type_colors[2],
+                        ifelse(grepl("ASL", rownames(pcoa_result$vectors)), type_colors[3], "ALack"))) # "ALack" as a default, just in case
 
 points(pcoa_result$vectors[,1], pcoa_result$vectors[,2], pch = 21, bg = colors, cex = 1.6)
 
@@ -74,22 +78,39 @@ legend("topright",
        pch = 21, 
        cex = 1.6)
 
+
+
 dev.off()
 
 # Let's do the PERMANOVA
 dist_matrix_rownames <- labels(dist_matrix)
-group_labels <- ifelse(grepl("DS$", dist_matrix_rownames), "Small",
-                       ifelse(grepl("DL", dist_matrix_rownames), "Large",
-                              ifelse(grepl("DSL", dist_matrix_rownames), "DeFr", "Whole")))
+group_labels_time <- ifelse(grepl("BB22.1", dist_matrix_rownames), "Pre-bloom",
+                       ifelse(grepl("BB22.2", dist_matrix_rownames), "Pre-bloom",
+                              ifelse(grepl("BB22.3", dist_matrix_rownames), "Pre-bloom",
+                                     ifelse(grepl("BB22.4", dist_matrix_rownames), "Pre-bloom",
+                                            ifelse(grepl("BB22.5", dist_matrix_rownames), "Pre-bloom",
+                                                   ifelse(grepl("BB22.6", dist_matrix_rownames), "Pre-bloom",
+                                                          ifelse(grepl("BB22.7", dist_matrix_rownames), "Pre-bloom", "ALoom")))))))
 
-permanova_result <- adonis2(as.matrix(dist_matrix) ~ group_labels, 
+group_labels <- ifelse(grepl("AS$", dist_matrix_rownames), "Small",
+                       ifelse(grepl("AL", dist_matrix_rownames), "Large",
+                              ifelse(grepl("ASL", dist_matrix_rownames), "DeFr", "Whole")))
+
+#permanova_result <- adonis2(as.matrix(dist_matrix) ~ group_labels, permutations = 999)
+
+permanova_result <- adonis2(as.matrix(dist_matrix) ~ group_labels + group_labels_time, 
                             permutations = 999)
+
 print(permanova_result)
+
+adonis_OmegaSq(permanova_result, partial = TRUE)
+
 
 # Make sure the labels are in a data frame
 df_group_labels <- data.frame(group_labels)
 
 # Run pairwise tests
+
 posthoc_results <- pairwise.adonis(dist_matrix, df_group_labels$group_label, p.adjust.m = 'fdr')
 
 print(posthoc_results)
