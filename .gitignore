@@ -17,3 +17,8 @@
 *-checkpoint.ipynb
 longitudinal-tutorial/*
 *.pyc
+*_fastqc.zip
+*_fastqc.html
+*.numbers
+chloroplast/training-phytoref-classifier/Cyanobacteria_p98.txt
+chloroplast/training-phytoref-classifier/PhytoRef_with_taxonomy.txt
