@@ -536,6 +536,11 @@ def pcaplot(separated, depth, comm, columnperm, spc, colrow):
             return 'Pre-bloom'
         elif weekNb >= 8:
             return 'Bloom'
+<<<<<<< HEAD
+=======
+        elif weekNb > 10:
+            return 'Bloom'
+>>>>>>> a1f0f8c58b7341da1925096f4ed46544fbf40aeb
 
     if depth != 'all':
         plot_df2['Time'] = plot_df2['weekn'].apply(get_stage)
@@ -545,7 +550,10 @@ def pcaplot(separated, depth, comm, columnperm, spc, colrow):
     pc1v = round(pca.explained_variance_ratio_[0]*100)
     pc2v = round(pca.explained_variance_ratio_[1]*100)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> a1f0f8c58b7341da1925096f4ed46544fbf40aeb
     #plot_df2 = plot_df2.drop_duplicates()
     #dfperm = plot_df2.set_index('sampleid')
 
@@ -561,9 +569,15 @@ def pcaplot(separated, depth, comm, columnperm, spc, colrow):
 
     sns.set_style("white")
     ax=sns.scatterplot(x = 'dim1', y = 'dim2', hue= 'Size code', style=var2, data = plot_df2,
+<<<<<<< HEAD
                        palette=palette_dict) #, size = 'Week_Group')#,palette=sns.color_palette("dark:salmon_r", as_cmap=True))
     plt.ylabel('PCo2') #(' + str(pc2v) + '% variance explained)')
     plt.xlabel('PCo1') #(' + str(pc1v) +'% variance explained)')
+=======
+                       palette=palette_dict)#, size = 'Week_Group')#,palette=sns.color_palette("dark:salmon_r", as_cmap=True))
+    plt.ylabel('PCo2 (' + str(pc2v) + '% variance explained)')
+    plt.xlabel('PCo1 (' + str(pc1v) +'% variance explained)')
+>>>>>>> a1f0f8c58b7341da1925096f4ed46544fbf40aeb
     ax.set_title('Depth ' + str(depth) + 'm', loc='left', weight='bold')
     plt.legend(frameon=False)
     sns.move_legend(ax, "upper left", bbox_to_anchor=(1, 1))
@@ -620,6 +634,7 @@ def pcaplot(separated, depth, comm, columnperm, spc, colrow):
 
 
     plt.savefig('outputs/'+comm+'/D'+str(depth)+spc+'_clustermap.png', dpi=200, bbox_inches="tight")
+<<<<<<< HEAD
 
     plot_df2['PCo 1'] = pc1v
     plot_df2['PCo 2'] = pc2v
@@ -691,6 +706,75 @@ def roll_avg(comm, table, depth, col, rollingavg=4):
     plt.savefig('outputs/'+comm+'/D'+str(depth)+'_nasvtrend.png', dpi=200, bbox_inches="tight")
 
 
+=======
+
+
+    return pca, pca_features, sfdclr, distance_matrix
+
+def roll_avg(comm, table, depth, col, rollingavg=4):
+    new2 = table.set_index('weekn')
+    new2.sort_index(ascending=True, inplace=True)
+    new2 = new2[new2['depth'] == depth]
+    analysis = new2[[col, 'size_code']].copy()
+
+    sizecodes = ['S', 'L', 'SL', 'W']
+    for sizecode in sizecodes:
+        df1 = analysis[analysis['size_code'] == sizecode]
+        df1.drop('size_code', axis=1, inplace=True)
+        df1.drop_duplicates(inplace=True)
+
+        rolling_mean = df1.rolling(rollingavg).mean()
+        rolling_std = df1.rolling(rollingavg).std()
+
+        plt.clf()
+        plt.plot(df1, color="blue",label="nASVs")
+        plt.plot(rolling_mean, color="red", label="Rolling Mean")
+        plt.plot(rolling_std, color="black", label = "Rolling Standard Deviation")
+
+        plt.ylabel('nASVs')
+        plt.xlabel('Time (week)')
+        plt.title('Rolling mean nASVs at depth' + str(depth) + 'm and size' + sizecode , loc='left', weight='bold')
+        #plt.legend(frameon=False)
+
+        plt.savefig('outputs/'+comm+'/D'+str(depth)+sizecode+'_rollavg.png', dpi=200, bbox_inches="tight")
+
+    #get one plot of the average of all size fractions
+    df1 = analysis.drop('size_code', axis=1) #drop the SF identifier
+    df1['mean_col'] = df1.groupby(df1.index)['nASVs'].mean() #take the average of all fractions per week
+
+    df1.drop('nASVs', axis=1, inplace=True)
+    df1.drop_duplicates(inplace=True)
+
+    rolling_mean = df1.rolling(rollingavg).mean()
+    rolling_std = df1.rolling(rollingavg).std()
+
+    plt.clf()
+    plt.plot(df1, color="blue",label="nASVs")
+    plt.plot(rolling_mean, color="red", label="Rolling Mean")
+    plt.plot(rolling_std, color="black", label = "Rolling Standard Deviation")
+
+    plt.ylabel('nASVs')
+    plt.xlabel('Time (week)')
+    plt.title('Rolling mean nASVs at depth' + str(depth) + 'm and all fractions', loc='left', weight='bold')
+    #plt.legend(frameon=False)
+
+    plt.savefig('outputs/'+comm+'/D'+str(depth)+'_rollavg.png', dpi=200, bbox_inches="tight")
+
+    analysis['weekn'] = analysis.index
+    analysis.drop_duplicates(inplace=True)
+    plt.clf()
+    sizecodes = ['S', 'L', 'W', 'SL']
+    palette_colors = sns.color_palette()
+    palette_dict = {sizecode: color for sizecode, color in zip(sizecodes, palette_colors)}
+    ax = sns.lmplot(x ='weekn', y ='nASVs', data = analysis, hue ='size_code', palette=palette_dict, legend=False)
+    plt.ylabel('nASVs')
+    plt.xlabel('Time (week)')
+    plt.title('Trend of nASVs at depth' + str(depth), loc='left', weight='bold')
+
+    plt.savefig('outputs/'+comm+'/D'+str(depth)+'_nasvtrend.png', dpi=200, bbox_inches="tight")
+
+
+>>>>>>> a1f0f8c58b7341da1925096f4ed46544fbf40aeb
 def detect_anomalies(metadata, df, dpt, yr=all, month=all):
 
     sfd=df[df.depth==dpt]
@@ -1129,7 +1213,11 @@ def run_ancom(comm, separated, sfdclr, depth, ancomcol):
     df_ancom = df_ancom.drop_duplicates()
     df_ancom = df_ancom.set_index('sampleid')
 
+<<<<<<< HEAD
     results = ancom(table=sfdclr, grouping=df_ancom[ancomcol], multiple_comparisons_correction='holm-bonferroni')
+=======
+    results = ancom(table=sfdclr, grouping=df_ancom[ancomcol])
+>>>>>>> a1f0f8c58b7341da1925096f4ed46544fbf40aeb
 
     DAresults = results[0].copy()
 
@@ -1453,6 +1541,7 @@ def calcperc(comm, separated, level):
     SW = df[(df['W'] != 0) & (df['S'] != 0) & (df['L'] == 0)]
     LSW = df[~(df == 0).any(axis=1)]
 
+<<<<<<< HEAD
     total = df.to_numpy().sum()
 
     Wonly_value = Wonly.to_numpy().sum()/total *100
@@ -1473,11 +1562,15 @@ def calcperc(comm, separated, level):
         text.set_fontsize(16)
     for text in vd.subset_labels:
         text.set_fontsize(18)
+=======
+    venn3(subsets = (len(Lonly), len(Sonly), len(LS), len(Wonly), len(LW), len(SW), len(LSW)), set_labels = ('Large >3μm', 'Small 3-02μm', 'Whole water <0.22μm'), alpha = 0.5);
+>>>>>>> a1f0f8c58b7341da1925096f4ed46544fbf40aeb
     plt.savefig("outputs/"+comm+"/alldepths_"+level+"_venn.png")
     plt.clf()
     plt.cla()
     plt.close()
 
+<<<<<<< HEAD
     vd2 = venn3(subsets = (Lonly_value, Sonly_value, LS_value, Wonly_value, LW_value, SW_value, LSW_value),
         set_labels = ('Large >3μm', 'Small 3-02μm', 'Whole water <0.22μm'),
         set_colors=("#d55e00", "#5f9e6e", "#5975a4"),
@@ -1491,6 +1584,8 @@ def calcperc(comm, separated, level):
     plt.cla()
     plt.close()
 
+=======
+>>>>>>> a1f0f8c58b7341da1925096f4ed46544fbf40aeb
     for d in range(len(depths)):
 
 
@@ -1533,28 +1628,39 @@ def calcperc(comm, separated, level):
         Lonly_value = Lonly.to_numpy().sum()/total *100
         LS_value = LS.to_numpy().sum()/total *100
 
+<<<<<<< HEAD
         LW_value = LW.to_numpy().sum()/total *100
         SW_value = SW.to_numpy().sum()/total *100
         LSW_value = LSW.to_numpy().sum()/total *100
 
+=======
+>>>>>>> a1f0f8c58b7341da1925096f4ed46544fbf40aeb
         dfplot.loc[d,'Depth'] = depths[d]
         dfplot.loc[d,'Sonly'] = Sonly_value
         dfplot.loc[d,'Lonly'] = Lonly_value
         dfplot.loc[d,'LS'] = LS_value
         dfplot.loc[d,'NSF'] = Wonly_value
         dfplot.loc[d,'Both'] = Both_value
+<<<<<<< HEAD
+=======
+
+>>>>>>> a1f0f8c58b7341da1925096f4ed46544fbf40aeb
 
 
+<<<<<<< HEAD
         venn3(subsets = (len(Lonly), len(Sonly), len(LS), len(Wonly), len(LW), len(SW), len(LSW)),
             set_labels = ('Large >3μm', 'Small 3-02μm', 'Whole water <0.22μm'),
             set_colors=("#d55e00", "#5f9e6e", "#5975a4"),
             alpha=1);
 
+=======
+>>>>>>> a1f0f8c58b7341da1925096f4ed46544fbf40aeb
         plt.savefig("outputs/"+comm+"/D"+str(depths[d])+level+"_venn.png")
         plt.clf()
         plt.cla()
         plt.close()
 
+<<<<<<< HEAD
         vd3 = venn3(subsets = (Lonly_value, Sonly_value, LS_value, Wonly_value, LW_value, SW_value, LSW_value),
             set_labels = ('Large >3μm', 'Small 3-02μm', 'Whole water <0.22μm'),
             set_colors=("#d55e00", "#5f9e6e", "#5975a4"),
@@ -1568,6 +1674,8 @@ def calcperc(comm, separated, level):
         plt.cla()
         plt.close()
 
+=======
+>>>>>>> a1f0f8c58b7341da1925096f4ed46544fbf40aeb
     dfplot['Depth'] = dfplot['Depth'].astype(str)
     dfplot = dfplot.set_index('Depth')
 
