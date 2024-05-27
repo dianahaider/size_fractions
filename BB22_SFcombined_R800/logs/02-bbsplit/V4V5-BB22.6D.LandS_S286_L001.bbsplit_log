@@ -1,0 +1,186 @@
+java -Djava.library.path=/Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/jni/ -ea -Xmx100g -cp /Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/current/ align2.BBSplitter ow=t fastareadlen=500 minhits=1 minratio=0.56 maxindel=20 qtrim=rl untrim=t trimq=6 usequality=f qtrim=f minratio=0.30 minid=0.30 pairedonly=f threads=20 -Xmx100g path=/Users/Diana/db/bbsplit-db/EUK-PROK-bbsplit-db/ in=01-trimmed/V4V5-BB22.6D.LandS_S286_L001.R1.trimmed.fastq in2=01-trimmed/V4V5-BB22.6D.LandS_S286_L001.R2.trimmed.fastq basename=V4V5-BB22.6D.LandS_S286_L001.trimmed.%_#.fastq
+Executing align2.BBSplitter [ow=t, fastareadlen=500, minhits=1, minratio=0.56, maxindel=20, qtrim=rl, untrim=t, trimq=6, usequality=f, qtrim=f, minratio=0.30, minid=0.30, pairedonly=f, threads=20, -Xmx100g, path=/Users/Diana/db/bbsplit-db/EUK-PROK-bbsplit-db/, in=01-trimmed/V4V5-BB22.6D.LandS_S286_L001.R1.trimmed.fastq, in2=01-trimmed/V4V5-BB22.6D.LandS_S286_L001.R2.trimmed.fastq, basename=V4V5-BB22.6D.LandS_S286_L001.trimmed.%_#.fastq]
+
+Exception in thread "main" java.lang.AssertionError: No reference specified, and none exists.  Please regenerate the index.
+	at align2.BBSplitter.mergeReferences(BBSplitter.java:346)
+	at align2.BBSplitter.processArgs(BBSplitter.java:175)
+	at align2.BBSplitter.main(BBSplitter.java:41)
+java -Djava.library.path=/Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/jni/ -ea -Xmx100g -cp /Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/current/ align2.BBSplitter ow=t fastareadlen=500 minhits=1 minratio=0.56 maxindel=20 qtrim=rl untrim=t trimq=6 usequality=f qtrim=f minratio=0.30 minid=0.30 pairedonly=f threads=20 -Xmx100g path=/Users/Diana/databases/bbsplit-db/ in=01-trimmed/V4V5-BB22.6D.LandS_S286_L001.R1.trimmed.fastq in2=01-trimmed/V4V5-BB22.6D.LandS_S286_L001.R2.trimmed.fastq basename=V4V5-BB22.6D.LandS_S286_L001.trimmed.%_#.fastq
+Executing align2.BBSplitter [ow=t, fastareadlen=500, minhits=1, minratio=0.56, maxindel=20, qtrim=rl, untrim=t, trimq=6, usequality=f, qtrim=f, minratio=0.30, minid=0.30, pairedonly=f, threads=20, -Xmx100g, path=/Users/Diana/databases/bbsplit-db/, in=01-trimmed/V4V5-BB22.6D.LandS_S286_L001.R1.trimmed.fastq, in2=01-trimmed/V4V5-BB22.6D.LandS_S286_L001.R2.trimmed.fastq, basename=V4V5-BB22.6D.LandS_S286_L001.trimmed.%_#.fastq]
+
+Exception in thread "main" java.lang.AssertionError: No reference specified, and none exists.  Please regenerate the index.
+	at align2.BBSplitter.mergeReferences(BBSplitter.java:346)
+	at align2.BBSplitter.processArgs(BBSplitter.java:175)
+	at align2.BBSplitter.main(BBSplitter.java:41)
+java -Djava.library.path=/Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/jni/ -ea -Xmx100g -cp /Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/current/ align2.BBSplitter ow=t fastareadlen=500 minhits=1 minratio=0.56 maxindel=20 qtrim=rl untrim=t trimq=6 usequality=f qtrim=f minratio=0.30 minid=0.30 pairedonly=f threads=20 -Xmx100g path=/Users/Diana/databases/bbsplit-db/EUK-PROK-bbsplit-db/ in=01-trimmed/V4V5-BB22.6D.LandS_S286_L001.R1.trimmed.fastq in2=01-trimmed/V4V5-BB22.6D.LandS_S286_L001.R2.trimmed.fastq basename=V4V5-BB22.6D.LandS_S286_L001.trimmed.%_#.fastq
+Executing align2.BBSplitter [ow=t, fastareadlen=500, minhits=1, minratio=0.56, maxindel=20, qtrim=rl, untrim=t, trimq=6, usequality=f, qtrim=f, minratio=0.30, minid=0.30, pairedonly=f, threads=20, -Xmx100g, path=/Users/Diana/databases/bbsplit-db/EUK-PROK-bbsplit-db/, in=01-trimmed/V4V5-BB22.6D.LandS_S286_L001.R1.trimmed.fastq, in2=01-trimmed/V4V5-BB22.6D.LandS_S286_L001.R2.trimmed.fastq, basename=V4V5-BB22.6D.LandS_S286_L001.trimmed.%_#.fastq]
+
+Merged reference file /Users/Diana/databases/bbsplit-db/EUK-PROK-bbsplit-db/ref/genome/1/merged_ref_1759910411204350.fa.gz already exists; skipping merge.
+Ref merge time:     	0.038 seconds.
+Executing align2.BBMap [ow=t, fastareadlen=500, minhits=1, minratio=0.56, maxindel=20, qtrim=rl, untrim=t, trimq=6, usequality=f, qtrim=f, minratio=0.30, minid=0.30, pairedonly=f, threads=20, in=01-trimmed/V4V5-BB22.6D.LandS_S286_L001.R1.trimmed.fastq, in2=01-trimmed/V4V5-BB22.6D.LandS_S286_L001.R2.trimmed.fastq, ref=/Users/Diana/databases/bbsplit-db/EUK-PROK-bbsplit-db/ref/genome/1/merged_ref_1759910411204350.fa.gz, out_SILVA_132_and_PR2_EUK.cdhit95pc=V4V5-BB22.6D.LandS_S286_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_#.fastq, out_SILVA_132_PROK.cdhit95pc=V4V5-BB22.6D.LandS_S286_L001.trimmed.SILVA_132_PROK.cdhit95pc_#.fastq]
+Version 38.22
+
+Set MINIMUM_ALIGNMENT_SCORE_RATIO to 0.560
+Set MINIMUM_ALIGNMENT_SCORE_RATIO to 0.300
+Set threads to 20
+Retaining first best site only for ambiguous mappings.
+Set MINIMUM_ALIGNMENT_SCORE_RATIO to 0.100
+NOTE:	Ignoring reference file because it already appears to have been processed.
+NOTE:	If you wish to regenerate the index, please manually delete /Users/Diana/databases/bbsplit-db/EUK-PROK-bbsplit-db/ref/genome/1/summary.txt
+Set genome to 1
+
+Loaded Reference:	0.959 seconds.
+Loading index for chunk 1-1, build 1
+Generated Index:	1.068 seconds.
+Analyzed Index:   	2.555 seconds.
+Cleared Memory:    	0.256 seconds.
+Processing reads in paired-ended mode.
+Started read stream.
+Started 20 mapping threads.
+Detecting finished threads: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19
+
+   ------------------   Results   ------------------   
+
+Genome:                	1
+Key Length:            	13
+Max Indel:             	20
+Minimum Score Ratio:  	0.1
+Mapping Mode:         	normal
+Reads Used:           	208002	(58552563 bases)
+
+Mapping:          	336.044 seconds.
+Reads/sec:       	618.97
+kBases/sec:      	174.24
+
+
+Pairing data:   	pct pairs	num pairs 	pct bases	   num bases
+
+mated pairs:     	 92.1232% 	    95809 	 92.2868% 	    54036276
+bad pairs:       	  7.5990% 	     7903 	  7.6125% 	     4457292
+insert size avg: 	  404.59
+
+
+Read 1 data:      	pct reads	num reads 	pct bases	   num bases
+
+mapped:          	 99.8115% 	   103805 	 99.8115% 	    29273010
+unambiguous:     	 78.4791% 	    81619 	 78.4791% 	    23016558
+ambiguous:       	 21.3325% 	    22186 	 21.3325% 	     6256452
+low-Q discards:  	  0.0000% 	        0 	  0.0000% 	           0
+
+perfect best site:	 15.3633% 	    15978 	 15.3633% 	     4505796
+semiperfect site:	 15.4662% 	    16085 	 15.4662% 	     4535970
+rescued:         	  0.8163% 	      849
+
+Match Rate:      	      NA 	       NA 	 97.9156% 	    28666951
+Error Rate:      	 84.5065% 	    87722 	  2.0815% 	      609392
+Sub Rate:        	 83.9738% 	    87169 	  2.0580% 	      602530
+Del Rate:        	  2.4440% 	     2537 	  0.0143% 	        4186
+Ins Rate:        	  1.0192% 	     1058 	  0.0091% 	        2676
+N Rate:          	  0.6098% 	      633 	  0.0029% 	         853
+
+
+Read 2 data:      	pct reads	num reads 	pct bases	   num bases
+
+mapped:          	 99.8558% 	   103851 	 99.8558% 	    29182131
+unambiguous:     	 87.9597% 	    91479 	 87.9597% 	    25705599
+ambiguous:       	 11.8960% 	    12372 	 11.8960% 	     3476532
+low-Q discards:  	  0.0000% 	        0 	  0.0000% 	           0
+
+perfect best site:	  5.4442% 	     5662 	  5.4442% 	     1591022
+semiperfect site:	  5.5528% 	     5775 	  5.5528% 	     1622775
+rescued:         	  0.3779% 	      393
+
+Match Rate:      	      NA 	       NA 	 95.7933% 	    27964144
+Error Rate:      	 94.4960% 	    98135 	  4.2014% 	     1226490
+Sub Rate:        	 94.2552% 	    97885 	  4.1167% 	     1201753
+Del Rate:        	  5.0187% 	     5212 	  0.0344% 	       10049
+Ins Rate:        	  3.6880% 	     3830 	  0.0503% 	       14688
+N Rate:          	  0.6712% 	      697 	  0.0053% 	        1546
+
+Total time:     	340.980 seconds.
+java -Djava.library.path=/Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/jni/ -ea -Xmx100g -cp /Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/current/ align2.BBSplitter ow=t fastareadlen=500 minhits=1 minratio=0.56 maxindel=20 qtrim=rl untrim=t trimq=6 usequality=f qtrim=f minratio=0.30 minid=0.30 pairedonly=f threads=20 -Xmx100g path=/Users/Diana/databases/bbsplit-db/EUK-PROK-bbsplit-db/ in=01-trimmed/V4V5-BB22.6D.LandS_S286_L001.R1.trimmed.fastq in2=01-trimmed/V4V5-BB22.6D.LandS_S286_L001.R2.trimmed.fastq basename=V4V5-BB22.6D.LandS_S286_L001.trimmed.%_#.fastq
+Executing align2.BBSplitter [ow=t, fastareadlen=500, minhits=1, minratio=0.56, maxindel=20, qtrim=rl, untrim=t, trimq=6, usequality=f, qtrim=f, minratio=0.30, minid=0.30, pairedonly=f, threads=20, -Xmx100g, path=/Users/Diana/databases/bbsplit-db/EUK-PROK-bbsplit-db/, in=01-trimmed/V4V5-BB22.6D.LandS_S286_L001.R1.trimmed.fastq, in2=01-trimmed/V4V5-BB22.6D.LandS_S286_L001.R2.trimmed.fastq, basename=V4V5-BB22.6D.LandS_S286_L001.trimmed.%_#.fastq]
+
+Merged reference file /Users/Diana/databases/bbsplit-db/EUK-PROK-bbsplit-db/ref/genome/1/merged_ref_1759910411204350.fa.gz already exists; skipping merge.
+Ref merge time:     	0.044 seconds.
+Executing align2.BBMap [ow=t, fastareadlen=500, minhits=1, minratio=0.56, maxindel=20, qtrim=rl, untrim=t, trimq=6, usequality=f, qtrim=f, minratio=0.30, minid=0.30, pairedonly=f, threads=20, in=01-trimmed/V4V5-BB22.6D.LandS_S286_L001.R1.trimmed.fastq, in2=01-trimmed/V4V5-BB22.6D.LandS_S286_L001.R2.trimmed.fastq, ref=/Users/Diana/databases/bbsplit-db/EUK-PROK-bbsplit-db/ref/genome/1/merged_ref_1759910411204350.fa.gz, out_SILVA_132_and_PR2_EUK.cdhit95pc=V4V5-BB22.6D.LandS_S286_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_#.fastq, out_SILVA_132_PROK.cdhit95pc=V4V5-BB22.6D.LandS_S286_L001.trimmed.SILVA_132_PROK.cdhit95pc_#.fastq]
+Version 38.22
+
+Set MINIMUM_ALIGNMENT_SCORE_RATIO to 0.560
+Set MINIMUM_ALIGNMENT_SCORE_RATIO to 0.300
+Set threads to 20
+Retaining first best site only for ambiguous mappings.
+Set MINIMUM_ALIGNMENT_SCORE_RATIO to 0.100
+NOTE:	Ignoring reference file because it already appears to have been processed.
+NOTE:	If you wish to regenerate the index, please manually delete /Users/Diana/databases/bbsplit-db/EUK-PROK-bbsplit-db/ref/genome/1/summary.txt
+Set genome to 1
+
+Loaded Reference:	0.921 seconds.
+Loading index for chunk 1-1, build 1
+Generated Index:	1.085 seconds.
+Analyzed Index:   	2.642 seconds.
+Cleared Memory:    	0.286 seconds.
+Processing reads in paired-ended mode.
+Started read stream.
+Started 20 mapping threads.
+Detecting finished threads: 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19
+
+   ------------------   Results   ------------------   
+
+Genome:                	1
+Key Length:            	13
+Max Indel:             	20
+Minimum Score Ratio:  	0.1
+Mapping Mode:         	normal
+Reads Used:           	208002	(58552563 bases)
+
+Mapping:          	335.919 seconds.
+Reads/sec:       	619.20
+kBases/sec:      	174.31
+
+
+Pairing data:   	pct pairs	num pairs 	pct bases	   num bases
+
+mated pairs:     	 92.1347% 	    95821 	 92.2983% 	    54043044
+bad pairs:       	  7.5874% 	     7891 	  7.6009% 	     4450524
+insert size avg: 	  404.59
+
+
+Read 1 data:      	pct reads	num reads 	pct bases	   num bases
+
+mapped:          	 99.8115% 	   103805 	 99.8115% 	    29273010
+unambiguous:     	 78.4791% 	    81619 	 78.4791% 	    23016558
+ambiguous:       	 21.3325% 	    22186 	 21.3325% 	     6256452
+low-Q discards:  	  0.0000% 	        0 	  0.0000% 	           0
+
+perfect best site:	 15.3633% 	    15978 	 15.3633% 	     4505796
+semiperfect site:	 15.4662% 	    16085 	 15.4662% 	     4535970
+rescued:         	  0.8173% 	      850
+
+Match Rate:      	      NA 	       NA 	 97.9156% 	    28666943
+Error Rate:      	 84.5065% 	    87722 	  2.0815% 	      609400
+Sub Rate:        	 83.9738% 	    87169 	  2.0580% 	      602538
+Del Rate:        	  2.4440% 	     2537 	  0.0143% 	        4186
+Ins Rate:        	  1.0192% 	     1058 	  0.0091% 	        2676
+N Rate:          	  0.6098% 	      633 	  0.0029% 	         853
+
+
+Read 2 data:      	pct reads	num reads 	pct bases	   num bases
+
+mapped:          	 99.8558% 	   103851 	 99.8558% 	    29182131
+unambiguous:     	 87.9655% 	    91485 	 87.9655% 	    25707285
+ambiguous:       	 11.8903% 	    12366 	 11.8903% 	     3474846
+low-Q discards:  	  0.0000% 	        0 	  0.0000% 	           0
+
+perfect best site:	  5.4432% 	     5661 	  5.4432% 	     1590741
+semiperfect site:	  5.5528% 	     5775 	  5.5528% 	     1622775
+rescued:         	  0.3760% 	      391
+
+Match Rate:      	      NA 	       NA 	 95.7932% 	    27964107
+Error Rate:      	 94.4969% 	    98136 	  4.2016% 	     1226524
+Sub Rate:        	 94.2562% 	    97886 	  4.1168% 	     1201792
+Del Rate:        	  5.0168% 	     5210 	  0.0344% 	       10047
+Ins Rate:        	  3.6851% 	     3827 	  0.0503% 	       14685
+N Rate:          	  0.6721% 	      698 	  0.0053% 	        1547
+
+Total time:     	340.968 seconds.

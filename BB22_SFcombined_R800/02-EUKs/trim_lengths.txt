@@ -1,0 +1,2 @@
+forward trim length =  bp
+reverse trim length =  bp

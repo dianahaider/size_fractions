@@ -1,0 +1,85 @@
+-bash: cutadapt: command not found
+This is cutadapt 4.4 with Python 3.10.12
+Command line parameters: --no-indels --pair-filter=any --error-rate=0.2 --discard-untrimmed -g ^GTGYCAGCMGCCGCGGTAA -G ^CCGYCAATTYMTTTRAGTTT -o 01-trimmed/V4V5-BB22.10C.LandS_S239_L001.R1.trimmed.fastq -p 01-trimmed/V4V5-BB22.10C.LandS_S239_L001.R2.trimmed.fastq 00-raw/V4V5-BB22.10C.LandS_S239_L001_R1_001_matched.fastq.gz 00-raw/V4V5-BB22.10C.LandS_S239_L001_R2_001_matched.fastq.gz
+Processing paired-end reads on 1 core ...
+Finished in 0.519 s (22.922 µs/read; 2.62 M reads/minute).
+
+=== Summary ===
+
+Total read pairs processed:             22,662
+  Read 1 with adapter:                  22,662 (100.0%)
+  Read 2 with adapter:                  22,656 (100.0%)
+
+== Read fate breakdown ==
+Pairs discarded as untrimmed:                6 (0.0%)
+Pairs written (passing filters):        22,656 (100.0%)
+
+Total basepairs processed:    13,642,524 bp
+  Read 1:     6,821,262 bp
+  Read 2:     6,821,262 bp
+Total written (filtered):     12,755,328 bp (93.5%)
+  Read 1:     6,388,992 bp
+  Read 2:     6,366,336 bp
+
+=== First read: Adapter 1 ===
+
+Sequence: GTGYCAGCMGCCGCGGTAA; Type: anchored 5'; Length: 19; Trimmed: 22662 times
+
+No. of allowed errors: 3
+
+Overview of removed sequences
+length	count	expect	max.err	error counts
+19	22662	0.0	3	21618 1014 30
+
+
+=== Second read: Adapter 2 ===
+
+Sequence: CCGYCAATTYMTTTRAGTTT; Type: anchored 5'; Length: 20; Trimmed: 22656 times
+
+No. of allowed errors: 4
+
+Overview of removed sequences
+length	count	expect	max.err	error counts
+20	22656	0.0	4	22033 558 65
+This is cutadapt 4.4 with Python 3.10.12
+Command line parameters: --no-indels --pair-filter=any --error-rate=0.2 --discard-untrimmed -g ^GTGYCAGCMGCCGCGGTAA -G ^CCGYCAATTYMTTTRAGTTT -o 01-trimmed/V4V5-BB22.10C.LandS_S239_L001.R1.trimmed.fastq -p 01-trimmed/V4V5-BB22.10C.LandS_S239_L001.R2.trimmed.fastq 00-raw/V4V5-BB22.10C.LandS_S239_L001_R1_001_matched.fastq.gz 00-raw/V4V5-BB22.10C.LandS_S239_L001_R2_001_matched.fastq.gz
+Processing paired-end reads on 1 core ...
+Finished in 0.511 s (22.545 µs/read; 2.66 M reads/minute).
+
+=== Summary ===
+
+Total read pairs processed:             22,662
+  Read 1 with adapter:                  22,662 (100.0%)
+  Read 2 with adapter:                  22,656 (100.0%)
+
+== Read fate breakdown ==
+Pairs discarded as untrimmed:                6 (0.0%)
+Pairs written (passing filters):        22,656 (100.0%)
+
+Total basepairs processed:    13,642,524 bp
+  Read 1:     6,821,262 bp
+  Read 2:     6,821,262 bp
+Total written (filtered):     12,755,328 bp (93.5%)
+  Read 1:     6,388,992 bp
+  Read 2:     6,366,336 bp
+
+=== First read: Adapter 1 ===
+
+Sequence: GTGYCAGCMGCCGCGGTAA; Type: anchored 5'; Length: 19; Trimmed: 22662 times
+
+No. of allowed errors: 3
+
+Overview of removed sequences
+length	count	expect	max.err	error counts
+19	22662	0.0	3	21618 1014 30
+
+
+=== Second read: Adapter 2 ===
+
+Sequence: CCGYCAATTYMTTTRAGTTT; Type: anchored 5'; Length: 20; Trimmed: 22656 times
+
+No. of allowed errors: 4
+
+Overview of removed sequences
+length	count	expect	max.err	error counts
+20	22656	0.0	4	22033 558 65

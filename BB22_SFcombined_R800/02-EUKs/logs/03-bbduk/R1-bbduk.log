@@ -1,0 +1,414 @@
+Max memory cannot be determined.  Attempting to use 1400 MB.
+If this fails, please add the -Xmx flag (e.g. -Xmx24g) to your command, 
+or run this program qsubbed or from a qlogin session on Genepool, or set ulimit to an appropriate value.
+java -Djava.library.path=/Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/jni/ -ea -Xmx1400m -Xms1400m -cp /Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/current/ jgi.BBDukF in=00-fastq/V4V5-BB22.10C.LandS_S239_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq out=03-size-selected/V4V5-BB22.10C.LandS_S239_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq minlength= forcetrimright=-1
+Executing jgi.BBDukF [in=00-fastq/V4V5-BB22.10C.LandS_S239_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq, out=03-size-selected/V4V5-BB22.10C.LandS_S239_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq, minlength=, forcetrimright=-1]
+Version 38.22
+
+NOTE: No reference files specified, no trimming mode, no min avg quality, no histograms - read sequences will not be changed.
+0.040 seconds.
+Initial:
+Memory: max=1407m, total=1407m, free=1375m, used=32m
+
+Input is being processed as unpaired
+Started output streams:	0.050 seconds.
+Processing time:   		0.075 seconds.
+
+Input:                  	769 reads 		216858 bases.
+Total Removed:          	0 reads (0.00%) 	0 bases (0.00%)
+Result:                 	769 reads (100.00%) 	216858 bases (100.00%)
+
+Time:                         	0.126 seconds.
+Reads Processed:         769 	6.10k reads/sec
+Bases Processed:        216k 	1.72m bases/sec
+Max memory cannot be determined.  Attempting to use 1400 MB.
+If this fails, please add the -Xmx flag (e.g. -Xmx24g) to your command, 
+or run this program qsubbed or from a qlogin session on Genepool, or set ulimit to an appropriate value.
+java -Djava.library.path=/Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/jni/ -ea -Xmx1400m -Xms1400m -cp /Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/current/ jgi.BBDukF in=00-fastq/V4V5-BB22.11E.LandS_S251_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq out=03-size-selected/V4V5-BB22.11E.LandS_S251_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq minlength= forcetrimright=-1
+Executing jgi.BBDukF [in=00-fastq/V4V5-BB22.11E.LandS_S251_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq, out=03-size-selected/V4V5-BB22.11E.LandS_S251_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq, minlength=, forcetrimright=-1]
+Version 38.22
+
+NOTE: No reference files specified, no trimming mode, no min avg quality, no histograms - read sequences will not be changed.
+0.027 seconds.
+Initial:
+Memory: max=1407m, total=1407m, free=1375m, used=32m
+
+Input is being processed as unpaired
+Started output streams:	0.024 seconds.
+Processing time:   		0.055 seconds.
+
+Input:                  	1151 reads 		324582 bases.
+Total Removed:          	0 reads (0.00%) 	0 bases (0.00%)
+Result:                 	1151 reads (100.00%) 	324582 bases (100.00%)
+
+Time:                         	0.082 seconds.
+Reads Processed:        1151 	14.06k reads/sec
+Bases Processed:        324k 	3.97m bases/sec
+Max memory cannot be determined.  Attempting to use 1400 MB.
+If this fails, please add the -Xmx flag (e.g. -Xmx24g) to your command, 
+or run this program qsubbed or from a qlogin session on Genepool, or set ulimit to an appropriate value.
+java -Djava.library.path=/Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/jni/ -ea -Xmx1400m -Xms1400m -cp /Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/current/ jgi.BBDukF in=00-fastq/V4V5-BB22.12A.LandS_S263_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq out=03-size-selected/V4V5-BB22.12A.LandS_S263_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq minlength= forcetrimright=-1
+Executing jgi.BBDukF [in=00-fastq/V4V5-BB22.12A.LandS_S263_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq, out=03-size-selected/V4V5-BB22.12A.LandS_S263_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq, minlength=, forcetrimright=-1]
+Version 38.22
+
+NOTE: No reference files specified, no trimming mode, no min avg quality, no histograms - read sequences will not be changed.
+0.032 seconds.
+Initial:
+Memory: max=1407m, total=1407m, free=1375m, used=32m
+
+Input is being processed as unpaired
+Started output streams:	0.026 seconds.
+Processing time:   		0.029 seconds.
+
+Input:                  	190 reads 		53580 bases.
+Total Removed:          	0 reads (0.00%) 	0 bases (0.00%)
+Result:                 	190 reads (100.00%) 	53580 bases (100.00%)
+
+Time:                         	0.056 seconds.
+Reads Processed:         190 	3.39k reads/sec
+Bases Processed:       53580 	0.96m bases/sec
+Max memory cannot be determined.  Attempting to use 1400 MB.
+If this fails, please add the -Xmx flag (e.g. -Xmx24g) to your command, 
+or run this program qsubbed or from a qlogin session on Genepool, or set ulimit to an appropriate value.
+java -Djava.library.path=/Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/jni/ -ea -Xmx1400m -Xms1400m -cp /Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/current/ jgi.BBDukF in=00-fastq/V4V5-BB22.12B.LandS_S275_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq out=03-size-selected/V4V5-BB22.12B.LandS_S275_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq minlength= forcetrimright=-1
+Executing jgi.BBDukF [in=00-fastq/V4V5-BB22.12B.LandS_S275_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq, out=03-size-selected/V4V5-BB22.12B.LandS_S275_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq, minlength=, forcetrimright=-1]
+Version 38.22
+
+NOTE: No reference files specified, no trimming mode, no min avg quality, no histograms - read sequences will not be changed.
+0.031 seconds.
+Initial:
+Memory: max=1407m, total=1407m, free=1375m, used=32m
+
+Input is being processed as unpaired
+Started output streams:	0.021 seconds.
+Processing time:   		0.050 seconds.
+
+Input:                  	273 reads 		76986 bases.
+Total Removed:          	0 reads (0.00%) 	0 bases (0.00%)
+Result:                 	273 reads (100.00%) 	76986 bases (100.00%)
+
+Time:                         	0.075 seconds.
+Reads Processed:         273 	3.64k reads/sec
+Bases Processed:       76986 	1.03m bases/sec
+Max memory cannot be determined.  Attempting to use 1400 MB.
+If this fails, please add the -Xmx flag (e.g. -Xmx24g) to your command, 
+or run this program qsubbed or from a qlogin session on Genepool, or set ulimit to an appropriate value.
+java -Djava.library.path=/Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/jni/ -ea -Xmx1400m -Xms1400m -cp /Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/current/ jgi.BBDukF in=00-fastq/V4V5-BB22.12C.LandS_S287_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq out=03-size-selected/V4V5-BB22.12C.LandS_S287_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq minlength= forcetrimright=-1
+Executing jgi.BBDukF [in=00-fastq/V4V5-BB22.12C.LandS_S287_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq, out=03-size-selected/V4V5-BB22.12C.LandS_S287_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq, minlength=, forcetrimright=-1]
+Version 38.22
+
+NOTE: No reference files specified, no trimming mode, no min avg quality, no histograms - read sequences will not be changed.
+0.030 seconds.
+Initial:
+Memory: max=1407m, total=1407m, free=1375m, used=32m
+
+Input is being processed as unpaired
+Started output streams:	0.026 seconds.
+Processing time:   		0.049 seconds.
+
+Input:                  	826 reads 		232932 bases.
+Total Removed:          	0 reads (0.00%) 	0 bases (0.00%)
+Result:                 	826 reads (100.00%) 	232932 bases (100.00%)
+
+Time:                         	0.076 seconds.
+Reads Processed:         826 	10.92k reads/sec
+Bases Processed:        232k 	3.08m bases/sec
+Max memory cannot be determined.  Attempting to use 1400 MB.
+If this fails, please add the -Xmx flag (e.g. -Xmx24g) to your command, 
+or run this program qsubbed or from a qlogin session on Genepool, or set ulimit to an appropriate value.
+java -Djava.library.path=/Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/jni/ -ea -Xmx1400m -Xms1400m -cp /Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/current/ jgi.BBDukF in=00-fastq/V4V5-BB22.12D.LandS_S204_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq out=03-size-selected/V4V5-BB22.12D.LandS_S204_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq minlength= forcetrimright=-1
+Executing jgi.BBDukF [in=00-fastq/V4V5-BB22.12D.LandS_S204_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq, out=03-size-selected/V4V5-BB22.12D.LandS_S204_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq, minlength=, forcetrimright=-1]
+Version 38.22
+
+NOTE: No reference files specified, no trimming mode, no min avg quality, no histograms - read sequences will not be changed.
+0.031 seconds.
+Initial:
+Memory: max=1407m, total=1407m, free=1375m, used=32m
+
+Input is being processed as unpaired
+Started output streams:	0.021 seconds.
+Processing time:   		0.049 seconds.
+
+Input:                  	673 reads 		189786 bases.
+Total Removed:          	0 reads (0.00%) 	0 bases (0.00%)
+Result:                 	673 reads (100.00%) 	189786 bases (100.00%)
+
+Time:                         	0.071 seconds.
+Reads Processed:         673 	9.47k reads/sec
+Bases Processed:        189k 	2.67m bases/sec
+Max memory cannot be determined.  Attempting to use 1400 MB.
+If this fails, please add the -Xmx flag (e.g. -Xmx24g) to your command, 
+or run this program qsubbed or from a qlogin session on Genepool, or set ulimit to an appropriate value.
+java -Djava.library.path=/Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/jni/ -ea -Xmx1400m -Xms1400m -cp /Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/current/ jgi.BBDukF in=00-fastq/V4V5-BB22.13B.LandS_S216_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq out=03-size-selected/V4V5-BB22.13B.LandS_S216_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq minlength= forcetrimright=-1
+Executing jgi.BBDukF [in=00-fastq/V4V5-BB22.13B.LandS_S216_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq, out=03-size-selected/V4V5-BB22.13B.LandS_S216_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq, minlength=, forcetrimright=-1]
+Version 38.22
+
+NOTE: No reference files specified, no trimming mode, no min avg quality, no histograms - read sequences will not be changed.
+0.034 seconds.
+Initial:
+Memory: max=1407m, total=1407m, free=1375m, used=32m
+
+Input is being processed as unpaired
+Started output streams:	0.022 seconds.
+Processing time:   		0.063 seconds.
+
+Input:                  	594 reads 		167508 bases.
+Total Removed:          	0 reads (0.00%) 	0 bases (0.00%)
+Result:                 	594 reads (100.00%) 	167508 bases (100.00%)
+
+Time:                         	0.086 seconds.
+Reads Processed:         594 	6.89k reads/sec
+Bases Processed:        167k 	1.94m bases/sec
+Max memory cannot be determined.  Attempting to use 1400 MB.
+If this fails, please add the -Xmx flag (e.g. -Xmx24g) to your command, 
+or run this program qsubbed or from a qlogin session on Genepool, or set ulimit to an appropriate value.
+java -Djava.library.path=/Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/jni/ -ea -Xmx1400m -Xms1400m -cp /Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/current/ jgi.BBDukF in=00-fastq/V4V5-BB22.13C.LandS_S228_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq out=03-size-selected/V4V5-BB22.13C.LandS_S228_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq minlength= forcetrimright=-1
+Executing jgi.BBDukF [in=00-fastq/V4V5-BB22.13C.LandS_S228_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq, out=03-size-selected/V4V5-BB22.13C.LandS_S228_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq, minlength=, forcetrimright=-1]
+Version 38.22
+
+NOTE: No reference files specified, no trimming mode, no min avg quality, no histograms - read sequences will not be changed.
+0.025 seconds.
+Initial:
+Memory: max=1407m, total=1407m, free=1375m, used=32m
+
+Input is being processed as unpaired
+Started output streams:	0.020 seconds.
+Processing time:   		0.054 seconds.
+
+Input:                  	1077 reads 		303714 bases.
+Total Removed:          	0 reads (0.00%) 	0 bases (0.00%)
+Result:                 	1077 reads (100.00%) 	303714 bases (100.00%)
+
+Time:                         	0.077 seconds.
+Reads Processed:        1077 	13.97k reads/sec
+Bases Processed:        303k 	3.94m bases/sec
+Max memory cannot be determined.  Attempting to use 1400 MB.
+If this fails, please add the -Xmx flag (e.g. -Xmx24g) to your command, 
+or run this program qsubbed or from a qlogin session on Genepool, or set ulimit to an appropriate value.
+java -Djava.library.path=/Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/jni/ -ea -Xmx1400m -Xms1400m -cp /Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/current/ jgi.BBDukF in=00-fastq/V4V5-BB22.14A.LandS_S240_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq out=03-size-selected/V4V5-BB22.14A.LandS_S240_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq minlength= forcetrimright=-1
+Executing jgi.BBDukF [in=00-fastq/V4V5-BB22.14A.LandS_S240_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq, out=03-size-selected/V4V5-BB22.14A.LandS_S240_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq, minlength=, forcetrimright=-1]
+Version 38.22
+
+NOTE: No reference files specified, no trimming mode, no min avg quality, no histograms - read sequences will not be changed.
+0.024 seconds.
+Initial:
+Memory: max=1407m, total=1407m, free=1375m, used=32m
+
+Input is being processed as unpaired
+Started output streams:	0.048 seconds.
+Processing time:   		0.037 seconds.
+
+Input:                  	590 reads 		166380 bases.
+Total Removed:          	0 reads (0.00%) 	0 bases (0.00%)
+Result:                 	590 reads (100.00%) 	166380 bases (100.00%)
+
+Time:                         	0.087 seconds.
+Reads Processed:         590 	6.76k reads/sec
+Bases Processed:        166k 	1.91m bases/sec
+Max memory cannot be determined.  Attempting to use 1400 MB.
+If this fails, please add the -Xmx flag (e.g. -Xmx24g) to your command, 
+or run this program qsubbed or from a qlogin session on Genepool, or set ulimit to an appropriate value.
+java -Djava.library.path=/Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/jni/ -ea -Xmx1400m -Xms1400m -cp /Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/current/ jgi.BBDukF in=00-fastq/V4V5-BB22.14E.LandS_S252_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq out=03-size-selected/V4V5-BB22.14E.LandS_S252_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq minlength= forcetrimright=-1
+Executing jgi.BBDukF [in=00-fastq/V4V5-BB22.14E.LandS_S252_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq, out=03-size-selected/V4V5-BB22.14E.LandS_S252_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq, minlength=, forcetrimright=-1]
+Version 38.22
+
+NOTE: No reference files specified, no trimming mode, no min avg quality, no histograms - read sequences will not be changed.
+0.027 seconds.
+Initial:
+Memory: max=1407m, total=1407m, free=1375m, used=32m
+
+Input is being processed as unpaired
+Started output streams:	0.023 seconds.
+Processing time:   		0.050 seconds.
+
+Input:                  	618 reads 		174276 bases.
+Total Removed:          	0 reads (0.00%) 	0 bases (0.00%)
+Result:                 	618 reads (100.00%) 	174276 bases (100.00%)
+
+Time:                         	0.076 seconds.
+Reads Processed:         618 	8.17k reads/sec
+Bases Processed:        174k 	2.31m bases/sec
+Max memory cannot be determined.  Attempting to use 1400 MB.
+If this fails, please add the -Xmx flag (e.g. -Xmx24g) to your command, 
+or run this program qsubbed or from a qlogin session on Genepool, or set ulimit to an appropriate value.
+java -Djava.library.path=/Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/jni/ -ea -Xmx1400m -Xms1400m -cp /Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/current/ jgi.BBDukF in=00-fastq/V4V5-BB22.15B.LandS_S264_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq out=03-size-selected/V4V5-BB22.15B.LandS_S264_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq minlength= forcetrimright=-1
+Executing jgi.BBDukF [in=00-fastq/V4V5-BB22.15B.LandS_S264_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq, out=03-size-selected/V4V5-BB22.15B.LandS_S264_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq, minlength=, forcetrimright=-1]
+Version 38.22
+
+NOTE: No reference files specified, no trimming mode, no min avg quality, no histograms - read sequences will not be changed.
+0.031 seconds.
+Initial:
+Memory: max=1407m, total=1407m, free=1375m, used=32m
+
+Input is being processed as unpaired
+Started output streams:	0.018 seconds.
+Processing time:   		0.042 seconds.
+
+Input:                  	542 reads 		152844 bases.
+Total Removed:          	0 reads (0.00%) 	0 bases (0.00%)
+Result:                 	542 reads (100.00%) 	152844 bases (100.00%)
+
+Time:                         	0.061 seconds.
+Reads Processed:         542 	8.85k reads/sec
+Bases Processed:        152k 	2.50m bases/sec
+Max memory cannot be determined.  Attempting to use 1400 MB.
+If this fails, please add the -Xmx flag (e.g. -Xmx24g) to your command, 
+or run this program qsubbed or from a qlogin session on Genepool, or set ulimit to an appropriate value.
+java -Djava.library.path=/Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/jni/ -ea -Xmx1400m -Xms1400m -cp /Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/current/ jgi.BBDukF in=00-fastq/V4V5-BB22.15C.LandS_S276_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq out=03-size-selected/V4V5-BB22.15C.LandS_S276_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq minlength= forcetrimright=-1
+Executing jgi.BBDukF [in=00-fastq/V4V5-BB22.15C.LandS_S276_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq, out=03-size-selected/V4V5-BB22.15C.LandS_S276_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq, minlength=, forcetrimright=-1]
+Version 38.22
+
+NOTE: No reference files specified, no trimming mode, no min avg quality, no histograms - read sequences will not be changed.
+0.035 seconds.
+Initial:
+Memory: max=1407m, total=1407m, free=1375m, used=32m
+
+Input is being processed as unpaired
+Started output streams:	0.019 seconds.
+Processing time:   		0.038 seconds.
+
+Input:                  	427 reads 		120414 bases.
+Total Removed:          	0 reads (0.00%) 	0 bases (0.00%)
+Result:                 	427 reads (100.00%) 	120414 bases (100.00%)
+
+Time:                         	0.059 seconds.
+Reads Processed:         427 	7.27k reads/sec
+Bases Processed:        120k 	2.05m bases/sec
+Max memory cannot be determined.  Attempting to use 1400 MB.
+If this fails, please add the -Xmx flag (e.g. -Xmx24g) to your command, 
+or run this program qsubbed or from a qlogin session on Genepool, or set ulimit to an appropriate value.
+java -Djava.library.path=/Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/jni/ -ea -Xmx1400m -Xms1400m -cp /Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/current/ jgi.BBDukF in=00-fastq/V4V5-BB22.2D.LandS_S262_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq out=03-size-selected/V4V5-BB22.2D.LandS_S262_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq minlength= forcetrimright=-1
+Executing jgi.BBDukF [in=00-fastq/V4V5-BB22.2D.LandS_S262_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq, out=03-size-selected/V4V5-BB22.2D.LandS_S262_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq, minlength=, forcetrimright=-1]
+Version 38.22
+
+NOTE: No reference files specified, no trimming mode, no min avg quality, no histograms - read sequences will not be changed.
+0.025 seconds.
+Initial:
+Memory: max=1407m, total=1407m, free=1375m, used=32m
+
+Input is being processed as unpaired
+Started output streams:	0.023 seconds.
+Processing time:   		0.041 seconds.
+
+Input:                  	318 reads 		89676 bases.
+Total Removed:          	0 reads (0.00%) 	0 bases (0.00%)
+Result:                 	318 reads (100.00%) 	89676 bases (100.00%)
+
+Time:                         	0.065 seconds.
+Reads Processed:         318 	4.87k reads/sec
+Bases Processed:       89676 	1.37m bases/sec
+Max memory cannot be determined.  Attempting to use 1400 MB.
+If this fails, please add the -Xmx flag (e.g. -Xmx24g) to your command, 
+or run this program qsubbed or from a qlogin session on Genepool, or set ulimit to an appropriate value.
+java -Djava.library.path=/Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/jni/ -ea -Xmx1400m -Xms1400m -cp /Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/current/ jgi.BBDukF in=00-fastq/V4V5-BB22.5D.LandS_S274_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq out=03-size-selected/V4V5-BB22.5D.LandS_S274_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq minlength= forcetrimright=-1
+Executing jgi.BBDukF [in=00-fastq/V4V5-BB22.5D.LandS_S274_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq, out=03-size-selected/V4V5-BB22.5D.LandS_S274_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq, minlength=, forcetrimright=-1]
+Version 38.22
+
+NOTE: No reference files specified, no trimming mode, no min avg quality, no histograms - read sequences will not be changed.
+0.030 seconds.
+Initial:
+Memory: max=1407m, total=1407m, free=1375m, used=32m
+
+Input is being processed as unpaired
+Started output streams:	0.023 seconds.
+Processing time:   		0.044 seconds.
+
+Input:                  	463 reads 		130566 bases.
+Total Removed:          	0 reads (0.00%) 	0 bases (0.00%)
+Result:                 	463 reads (100.00%) 	130566 bases (100.00%)
+
+Time:                         	0.070 seconds.
+Reads Processed:         463 	6.60k reads/sec
+Bases Processed:        130k 	1.86m bases/sec
+Max memory cannot be determined.  Attempting to use 1400 MB.
+If this fails, please add the -Xmx flag (e.g. -Xmx24g) to your command, 
+or run this program qsubbed or from a qlogin session on Genepool, or set ulimit to an appropriate value.
+java -Djava.library.path=/Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/jni/ -ea -Xmx1400m -Xms1400m -cp /Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/current/ jgi.BBDukF in=00-fastq/V4V5-BB22.6D.LandS_S286_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq out=03-size-selected/V4V5-BB22.6D.LandS_S286_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq minlength= forcetrimright=-1
+Executing jgi.BBDukF [in=00-fastq/V4V5-BB22.6D.LandS_S286_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq, out=03-size-selected/V4V5-BB22.6D.LandS_S286_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq, minlength=, forcetrimright=-1]
+Version 38.22
+
+NOTE: No reference files specified, no trimming mode, no min avg quality, no histograms - read sequences will not be changed.
+0.024 seconds.
+Initial:
+Memory: max=1407m, total=1407m, free=1375m, used=32m
+
+Input is being processed as unpaired
+Started output streams:	0.021 seconds.
+Processing time:   		0.041 seconds.
+
+Input:                  	513 reads 		144666 bases.
+Total Removed:          	0 reads (0.00%) 	0 bases (0.00%)
+Result:                 	513 reads (100.00%) 	144666 bases (100.00%)
+
+Time:                         	0.064 seconds.
+Reads Processed:         513 	8.04k reads/sec
+Bases Processed:        144k 	2.27m bases/sec
+Max memory cannot be determined.  Attempting to use 1400 MB.
+If this fails, please add the -Xmx flag (e.g. -Xmx24g) to your command, 
+or run this program qsubbed or from a qlogin session on Genepool, or set ulimit to an appropriate value.
+java -Djava.library.path=/Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/jni/ -ea -Xmx1400m -Xms1400m -cp /Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/current/ jgi.BBDukF in=00-fastq/V4V5-BB22.7D.LandS_S203_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq out=03-size-selected/V4V5-BB22.7D.LandS_S203_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq minlength= forcetrimright=-1
+Executing jgi.BBDukF [in=00-fastq/V4V5-BB22.7D.LandS_S203_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq, out=03-size-selected/V4V5-BB22.7D.LandS_S203_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq, minlength=, forcetrimright=-1]
+Version 38.22
+
+NOTE: No reference files specified, no trimming mode, no min avg quality, no histograms - read sequences will not be changed.
+0.030 seconds.
+Initial:
+Memory: max=1407m, total=1407m, free=1375m, used=32m
+
+Input is being processed as unpaired
+Started output streams:	0.028 seconds.
+Processing time:   		0.033 seconds.
+
+Input:                  	311 reads 		87702 bases.
+Total Removed:          	0 reads (0.00%) 	0 bases (0.00%)
+Result:                 	311 reads (100.00%) 	87702 bases (100.00%)
+
+Time:                         	0.065 seconds.
+Reads Processed:         311 	4.80k reads/sec
+Bases Processed:       87702 	1.35m bases/sec
+Max memory cannot be determined.  Attempting to use 1400 MB.
+If this fails, please add the -Xmx flag (e.g. -Xmx24g) to your command, 
+or run this program qsubbed or from a qlogin session on Genepool, or set ulimit to an appropriate value.
+java -Djava.library.path=/Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/jni/ -ea -Xmx1400m -Xms1400m -cp /Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/current/ jgi.BBDukF in=00-fastq/V4V5-BB22.7E.LandS_S215_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq out=03-size-selected/V4V5-BB22.7E.LandS_S215_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq minlength= forcetrimright=-1
+Executing jgi.BBDukF [in=00-fastq/V4V5-BB22.7E.LandS_S215_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq, out=03-size-selected/V4V5-BB22.7E.LandS_S215_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq, minlength=, forcetrimright=-1]
+Version 38.22
+
+NOTE: No reference files specified, no trimming mode, no min avg quality, no histograms - read sequences will not be changed.
+0.030 seconds.
+Initial:
+Memory: max=1407m, total=1407m, free=1375m, used=32m
+
+Input is being processed as unpaired
+Started output streams:	0.021 seconds.
+Processing time:   		0.042 seconds.
+
+Input:                  	619 reads 		174558 bases.
+Total Removed:          	0 reads (0.00%) 	0 bases (0.00%)
+Result:                 	619 reads (100.00%) 	174558 bases (100.00%)
+
+Time:                         	0.064 seconds.
+Reads Processed:         619 	9.70k reads/sec
+Bases Processed:        174k 	2.74m bases/sec
+Max memory cannot be determined.  Attempting to use 1400 MB.
+If this fails, please add the -Xmx flag (e.g. -Xmx24g) to your command, 
+or run this program qsubbed or from a qlogin session on Genepool, or set ulimit to an appropriate value.
+java -Djava.library.path=/Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/jni/ -ea -Xmx1400m -Xms1400m -cp /Users/Diana/mambaforge/envs/bbmap-env/opt/bbmap-38.22-1/current/ jgi.BBDukF in=00-fastq/V4V5-BB22.9B.LandS_S227_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq out=03-size-selected/V4V5-BB22.9B.LandS_S227_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq minlength= forcetrimright=-1
+Executing jgi.BBDukF [in=00-fastq/V4V5-BB22.9B.LandS_S227_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.fastq, out=03-size-selected/V4V5-BB22.9B.LandS_S227_L001.trimmed.SILVA_132_and_PR2_EUK.cdhit95pc_1.trimmed.fastq, minlength=, forcetrimright=-1]
+Version 38.22
+
+NOTE: No reference files specified, no trimming mode, no min avg quality, no histograms - read sequences will not be changed.
+0.033 seconds.
+Initial:
+Memory: max=1407m, total=1407m, free=1375m, used=32m
+
+Input is being processed as unpaired
+Started output streams:	0.020 seconds.
+Processing time:   		0.036 seconds.
+
+Input:                  	447 reads 		126054 bases.
+Total Removed:          	0 reads (0.00%) 	0 bases (0.00%)
+Result:                 	447 reads (100.00%) 	126054 bases (100.00%)
+
+Time:                         	0.058 seconds.
+Reads Processed:         447 	7.70k reads/sec
+Bases Processed:        126k 	2.17m bases/sec

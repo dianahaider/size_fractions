@@ -1,3 +1,4 @@
+#Locally
 #1.0 Inspect read quality
 mkdir fastqc_out
 fastqc -t $NCORES raw_data/*.fastq.gz -o fastqc_out
@@ -8,58 +9,34 @@ cd ..
 
 #2.0
 conda activate cutadaptenv
+#ensure variables in each file is accurate
+source eASV-pipeline-for-515Y-926R/qiime2-2022.2-DADA2-SILVA138.1-PR2_4.14.0/00-trimming-sorting-scripts/00-run-cutadapt.sh
+conda activate bbmap-env
+source eASV-pipeline-for-515Y-926R/qiime2-2022.2-DADA2-SILVA138.1-PR2_4.14.0/00-trimming-sorting-scripts/01-sort-16S-18S-bbsplit.sh 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+#After bbsplit; cd into PROKS
 #2.0 Download qiime environment and activate
 #follow download instructions on https://docs.qiime2.org/2023.5/install/native/
 source activate qiime2-2023.5 
 
 mkdir reads_qza
-    
-qiime tools import \
-   --type SampleData[PairedEndSequencesWithQuality] \
-   --input-path raw_data/ \
-   --output-path reads_qza/reads.qza \
-   --input-format CasavaOneEightSingleLanePerSampleDirFmt
 
-qiime cutadapt trim-paired \
-   --i-demultiplexed-sequences reads_qza/reads.qza \
-   --p-cores 1 \
-   --p-front-f GTGYCAGCMGCCGCGGTAA \
-   --p-front-r CCGYCAATTYMTTTRAGTTT \
-   --p-discard-untrimmed \
-   --p-no-indels \
-   --o-trimmed-sequences reads_qza/reads_trimmed.qza
+#create manifest 
+source ~/projects/def-rbeiko/dhaider/bb_data/split_pipeline/eASV-pipeline-for-515Y-926R/qiime2-2022.2-DADA2-SILVA138.1-PR2_4.14.0/01-prok-scripts/P00-create-manifest.sh
 
+#import to qiime   
+qiime tools import --type 'SampleData[PairedEndSequencesWithQuality]' \
+--input-path manifest.tsv \
+--output-path outputs/16s.qza \
+--input-format PairedEndFastqManifestPhred33V2 #v2 for tsv manifest file
 
-#from local: 
-ssh -Y dhaider@narval.computecanada.ca
-(to ssh my pssword is 9043..)
-scp -r 2017 dhaider@narval.computecanada.ca:~/projects/def-rbeiko/dhaider/bb_data/split_pipeline
+#run dada2
+qiime dada2 denoise-paired --i-demultiplexed-seqs /inputs/reads_trimmed.qza --p-trunc-len-f 280 --p-trunc-len-r 280 --output-dir /outputs/dada2_output --verbose
 
-#**move to compute canada**
-#from remote:
-singularity exec -B $PWD:/home/projects/def-rbeiko/dhaider/bb_data -B 2017:/outputs \
-  -B 2017:/inputs qiime2-2023.2.sif \
-  qiime dada2 denoise-paired --i-demultiplexed-seqs /inputs/reads_trimmed.qza --p-trunc-len-f 280 --p-trunc-len-r 280 --output-dir /outputs/dada2_output --verbose
-
+#download classifier and classify reads
 wget https://data.qiime2.org/2023.5/common/silva-138-99-nb-classifier.qza
 
-singularity --mem=16GB exec -B $PWD:/home/projects/def-rbeiko/dhaider/bb_data -B 2014:/outputs \
-  -B 2014/dada2_output:/inputs -B 2014:/class qiime2-2023.2.sif \
-  qiime feature-classifier classify-sklearn --i-reads /inputs/representative_sequences.qza --i-classifier /class/silva-138-99-nb-classifier.qza --output-dir /outputs/taxa --verbose
+qiime feature-classifier classify-sklearn --i-reads /inputs/representative_sequences.qza --i-classifier /class/silva-138-99-nb-classifier.qza --output-dir /outputs/taxa --verbose
 
 
 #from local
@@ -92,3 +69,19 @@ qiime composition ancom --i-table dada2_output_270210/table_filt_contam_pseudoco
 qiime tools export    --input-path dada2_output/table_filt_contam.qza    --output-path dada2_output_exported
 
 biom convert -i feature-table.biom -o feature-table.tsv --to-tsv
+
+
+
+
+
+#euks
+source ~/Documents/escuela/phd/eASV-pipeline-for-515Y-926R/qiime2-2022.2-DADA2-SILVA138.1-PR2_4.14.0/01-euk-scripts/E03-bbduk-cut-reads.sh 280 280
+
+
+source ~/Documents/escuela/phd/eASV-pipeline-for-515Y-926R/qiime2-2022.2-DADA2-SILVA138.1-PR2_4.14.0/01-euk-scripts/E04-fuse-EUKs-withoutNs.sh 
+
+
+
+
+
+

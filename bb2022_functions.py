@@ -21,6 +21,7 @@ import seaborn as sns
 #sns.set(style="whitegrid")
 import plotly.express as px
 from IPython.display import display
+from IPython.display import HTML
 from sklearn.ensemble import IsolationForest
 
 from pandas.plotting import register_matplotlib_converters
@@ -44,14 +45,18 @@ import statsmodels.formula.api as sfa
 import scikit_posthocs as spPH
 
 # Special thanks to Alex Manuele https://github.com/alexmanuele
-def consolidate_tables(MG):
+def consolidate_tables(MG, frac=None):
     if MG == '16S':
         comm = '02-PROKs'
     else :
         comm = '02-EUKs'
 
-    table_list = glob.glob('{0}/table.qza'.format('/Users/Diana/Documents/escuela/phd/size_fractions/BB22_size-fraction-comparison-analysed/to_transfer/'+comm))
-    print("Found all "+MG+" tables.")
+    if frac==None:
+        table_list = glob.glob('{0}/dada2_SF/table.qza'.format('/Users/Diana/Documents/escuela/phd/size_fractions/BB22_size-fraction-comparison-analysed/to_transfer/'+comm))
+        print("Found all "+MG+" tables.")
+    else:
+        table_list = glob.glob('{0}/*/table.qza'.format('/Users/Diana/Documents/escuela/phd/size_fractions/BB22_size-fraction-comparison-analysed/to_transfer/'+comm))
+        print("Found all "+MG+" tables.")
 
 
     dataframes = []
@@ -103,7 +108,8 @@ def consolidate_tables(MG):
     #outputfile="merged_all_tables.tsv"
     df = pd.concat(dataframes)
     df['sample_name'] = df['sample_name'].str.replace(r'\.S([1-9]|[1-9][0-9]|[1-9][0-9][0-9]).L001\.','', regex=True)
-
+    df['sample_name'] = df['sample_name'].str.replace('V4V5.','', regex=True)
+    df['sample_name'] = df['sample_name'].str.replace(r'\.LandS.S([1-9]|[1-9][0-9]|[1-9][0-9][0-9]).L001','P', regex=True)
     #df.to_csv(comm+'/merged_all_tables.tsv', sep='\t', index=False)
     print("Successfully saved all tables.")
     return df, comm
@@ -165,6 +171,7 @@ def make_defract(all_md, separated):
 
     #only keep values from weeks 1 to 16
     sep_SL = all_md[all_md.size_code != "W"]
+    sep_SL = all_md[all_md.size_code != "P"]
     sep_SL = sep_SL.drop(sep_SL[sep_SL.weekn > 16].index)
 
     #sum [DNA] of small and large size fractions
@@ -183,6 +190,7 @@ def make_defract(all_md, separated):
 
     #exclude ASVs from the whole water
     sep_SLRA = sepSLRA[separated.size_code != "W"]
+    sep_SLRA = sepSLRA[separated.size_code != "P"]
 
     #calculate corrected per sample ratio, and corrected feature frequency of de-fractionated samples
     sep_SLRA['Newfeature_frequency'] = sep_SLRA['feature_frequency'] * sep_SLRA['DNApr']
@@ -216,6 +224,9 @@ def make_defract(all_md, separated):
     sep_WO = separated[separated.size_code == "W"]
     sep_WO = sep_WO.drop_duplicates()
 
+    sep_PO = separated[separated.size_code == "P"]
+    sep_PO = sep_PO.drop_duplicates()
+
     sep_S = separated[separated.size_code == "S"]
     sep_L = separated[separated.size_code == "L"]
 
@@ -224,7 +235,7 @@ def make_defract(all_md, separated):
     sep_SLRA.reset_index(inplace=True, drop=True)
 
     #newseparated = pd.concat([sep_SLRA.reset_index(drop=True), sep_WO.reset_index(drop=True)], axis=0).reset_index(drop=True)
-    newseparated = pd.concat([sep_SLRA, sep_WO, sep_L, sep_S], ignore_index=True)
+    newseparated = pd.concat([sep_SLRA, sep_WO, sep_PO, sep_L, sep_S], ignore_index=True)
 
     newseparated['weekdepth'] = newseparated["weekn"].astype(str) + newseparated["depth"].astype(str)
     newseparated['avg'] = newseparated['nASVs'].groupby(newseparated['weekdepth']).transform('mean')
@@ -382,7 +393,7 @@ def SRA_pairs(comm, SFX, SFY, separated, outliers='None', view=False):
 
 def taxbarplot(separated, level, depth, topn, palette_dict, colrow): #separated is the df, #level is a string of taxonomic level column name, depth is an integer
     sfd=separated[separated.depth==depth]
-    toptaxa = sfd[['feature_id', 'feature_frequency', 'Taxon', 'size_code', 'depth','weekn', level]].copy()
+    toptaxa = sfd[['feature_frequency', 'Taxon', 'size_code', 'depth','weekn', level]].copy()
     toptaxa = toptaxa.drop_duplicates()
     df_agg = toptaxa.groupby(['size_code',level, 'depth']).agg({'feature_frequency':sum})
     topd = df_agg['feature_frequency'].groupby('size_code', group_keys=False).nlargest(topn)
@@ -412,7 +423,8 @@ def taxbarplot(separated, level, depth, topn, palette_dict, colrow): #separated 
     fig = px.bar(phyld, x="size_code", y="ratio", facet_col="weekn", color=level, labels={
                      "feature_frequency": "Relative abundance",
                      "size_code": "",
-                     "weekn": "w"}, color_discrete_map=palette_dict)
+                     "weekn": "w"}, color_discrete_map=palette_dict,
+    hover_data=["Taxon"])
     fig.update_xaxes(type='category', dtick=1)
     fig.update_layout(
         #title= text="Relative abundance of top"+str(topn) + level + 'observed at Depth' + str(depth),
@@ -449,7 +461,7 @@ def pcaplot(separated, depth, comm, columnperm, spc, colrow):
 
     if 'SL' in separated['size_code'].unique():
         #sizecode palette codes
-        sizecodes = ['S', 'L', 'W', 'SL']
+        sizecodes = ['S', 'L', 'W', 'SL', 'P']
         palette_colors = sns.color_palette()
         palette_dict = {sizecode: color for sizecode, color in zip(sizecodes, palette_colors)}
         dicsc = pd.Series(df.size_code.values,index=df.sampleid).to_dict()
@@ -458,7 +470,7 @@ def pcaplot(separated, depth, comm, columnperm, spc, colrow):
 
     else:
         #sizecode palette codes
-        sizecodes = ['S', 'L', 'W']
+        sizecodes = ['S', 'L', 'W', 'P']
         palette_colors = sns.color_palette()
         palette_dict = {sizecode: color for sizecode, color in zip(sizecodes, palette_colors)}
         dicsc = pd.Series(df.size_code.values,index=df.sampleid).to_dict()
@@ -590,17 +602,17 @@ def pcaplot(separated, depth, comm, columnperm, spc, colrow):
         metadata_contributions[group] = group_loadings
 
     # Visual Representation
-    for group, contributions in metadata_contributions.items():
-        plt.barh(contributions, group) #range(1, len(contributions) + 1),
+    #for group, contributions in metadata_contributions.items():
+    #    plt.barh(contributions, group) #range(1, len(contributions) + 1),
 
-    plt.ylabel('Principal Component')
-    plt.xlabel('Average Loading Contribution')
-    sns.despine()
-    plt.legend(frameon=False)
-    plt.savefig('outputs/'+comm+'/D'+str(depth)+spc+'_PCAplot_brplot.png', dpi=200, bbox_inches="tight")
-    plt.clf()
-    plt.cla()
-    plt.close()
+    #plt.ylabel('Principal Component')
+    #plt.xlabel('Average Loading Contribution')
+    #sns.despine()
+    #plt.legend(frameon=False)
+    #plt.savefig('outputs/'+comm+'/D'+str(depth)+spc+'_PCAplot_brplot.png', dpi=200, bbox_inches="tight")
+    #plt.clf()
+    #plt.cla()
+    #plt.close()
 
 
     ##clustermap
@@ -619,6 +631,10 @@ def pcaplot(separated, depth, comm, columnperm, spc, colrow):
 
 
     plt.savefig('outputs/'+comm+'/D'+str(depth)+spc+'_clustermap.png', dpi=200, bbox_inches="tight")
+    plt.clf()
+    plt.cla()
+    plt.close()
+
 
     plot_df2['PCo 1'] = pc1v
     plot_df2['PCo 2'] = pc2v
@@ -974,13 +990,13 @@ def boxplot_depth(separated, comm, depth, ycolumn, yaxislabel='def'):
 
     if 'SL' in separated['size_code'].unique():
         #sizecode palette codes
-        sizecodes = ['S', 'L', 'W', 'SL']
+        sizecodes = ['S', 'L', 'W', 'SL', 'P']
         palette_colors = sns.color_palette()
         palette_dict = {sizecode: color for sizecode, color in zip(sizecodes, palette_colors)}
 
     else:
         #define color palettes
-        sizecodes = ['S', 'L', 'W']
+        sizecodes = ['S', 'L', 'W', 'P']
         palette_colors = sns.color_palette()
         palette_dict = {sizecode: color for sizecode, color in zip(sizecodes, palette_colors)}
 
@@ -1098,23 +1114,23 @@ def subplots(comm, depth, fids, pltyp, newseparated):
     plt.savefig('outputs/'+comm+'/D'+str(depth)+'_lineplots'+ str(pltyp) +'.png', dpi=200, bbox_inches="tight")
 
 
-def upsetprep(comm, level, separated):
+def upsetprep(comm, level, separated, depth):
 
     depths = [1, 5, 10, 30, 60]
 
     cumulab = separated[['feature_frequency', 'depth', 'size_code', level]].copy()
     cumulab1 = cumulab.groupby([level]).agg({'feature_frequency':sum})
 
-    for d in depths:
-        #make csv
-        sfd=separated[separated.depth==d]
+    if d != 'all':
+        for d in depths:
+            #make csv
+            sfd=separated[separated.depth==d]
+    else:
+        sfd=separated.copy()
 
         toptaxa = sfd[['feature_frequency', 'Taxon', 'size_code', 'depth','weekn', level]].copy()
         toptaxa = toptaxa.drop_duplicates()
         df_agg = toptaxa.groupby(['size_code',level, 'depth']).agg({'feature_frequency':sum})
-        topd = df_agg['feature_frequency'].groupby('size_code', group_keys=False).nlargest(10)
-        topd = topd.to_frame()
-        topd = topd.reset_index()
 
         df_agg = df_agg.reset_index()
         df_agg['set_name'] = df_agg['size_code']+df_agg['depth'].astype(str)
@@ -1517,6 +1533,11 @@ def calcperc(comm, separated, level):
     SW = df[(df['W'] != 0) & (df['S'] != 0) & (df['L'] == 0)]
     LSW = df[~(df == 0).any(axis=1)]
 
+    D_taxlist = pd.DataFrame.from_dict({'Sonly': Sonly.index.tolist(), 'Wonly': Wonly.index.tolist(), 'Lonly': Lonly.index.tolist(),
+            'LW': LW.index.tolist(), 'LS':LS.index.tolist(), 'SW':SW.index.tolist(), 'LSW':LSW.index.tolist()}, orient='index').T
+
+    D_taxlist.to_csv('outputs/'+comm+'/all_taxlist.csv')
+
 
     total = df.to_numpy().sum()
 
@@ -1532,7 +1553,7 @@ def calcperc(comm, separated, level):
 
     vd = venn3(subsets = (len(Lonly), len(Sonly), len(LS), len(Wonly), len(LW), len(SW), len(LSW)),
         set_labels = ('Large >3μm', 'Small 0.2-3μm', 'Whole water >0.2μm'),
-        set_colors=("#d55e00", "#5f9e6e", "#5975a4"),
+        set_colors=("#d55e00", "#5975a4", "#5f9e6e"),
         alpha=1);
     for text in vd.set_labels:
         text.set_fontsize(16)
@@ -1541,16 +1562,14 @@ def calcperc(comm, separated, level):
 
     vd2 = venn3(subsets = (Lonly_value, Sonly_value, LS_value, Wonly_value, LW_value, SW_value, LSW_value),
         set_labels = ('Large >3μm', 'Small 3-02μm', 'Whole water <0.22μm'),
-        set_colors=("#d55e00", "#5f9e6e", "#5975a4"),
+        set_colors=("#d55e00", "#5975a4", "#5f9e6e"),
         alpha=1);
-
-    for idx, subset in enumerate(vd2.subset_labels):
-        vd2.subset_labels[idx].set_visible(False)
 
     plt.savefig("outputs/"+comm+"/alldepths_"+level+"_venn_2.png")
     plt.clf()
     plt.cla()
     plt.close()
+
 
     for d in range(len(depths)):
 
@@ -1574,6 +1593,12 @@ def calcperc(comm, separated, level):
         LS = df[(df['W'] == 0) & (df['S'] != 0) & (df['L'] != 0)]
         SW = df[(df['W'] != 0) & (df['S'] != 0) & (df['L'] == 0)]
         LSW = df[~(df == 0).any(axis=1)]
+
+        D_taxlist = pd.DataFrame.from_dict({'Sonly': Sonly.index.tolist(), 'Wonly': Wonly.index.tolist(), 'Lonly': Lonly.index.tolist(),
+            'LW': LW.index.tolist(), 'LS':LS.index.tolist(), 'SW':SW.index.tolist(), 'LSW':LSW.index.tolist()}, orient='index').T
+
+        D_taxlist.to_csv('outputs/'+comm+'/'+str(depths[d])+'_taxlist.csv')
+
 
         total = df.to_numpy().sum()
 
@@ -1608,11 +1633,9 @@ def calcperc(comm, separated, level):
 
         vd3 = venn3(subsets = (Lonly_value, Sonly_value, LS_value, Wonly_value, LW_value, SW_value, LSW_value),
             set_labels = ('Large >3μm', 'Small 3-02μm', 'Whole water <0.22μm'),
-            set_colors=("#d55e00", "#5f9e6e", "#5975a4"),
+            set_colors=("#d55e00", "#5975a4", "#5f9e6e"),
             alpha=1);
 
-        for idx, subset in enumerate(vd3.subset_labels):
-            vd3.subset_labels[idx].set_visible(False)
 
         plt.savefig("outputs/"+comm+"/D"+str(depths[d])+level+"_venn_2.png")
         plt.clf()
@@ -1896,4 +1919,92 @@ def plot_stackedbar_p_SLNSF(comm, df, labels, colors, title, subtitle, level, xm
     plt.gca().invert_yaxis()
     plt.ylabel("Depth (m)")
     plt.savefig('outputs/'+comm+'/'+level+'alldepths_stacked_perc_weighted'+ tablelabel +'.png', dpi=200, bbox_inches="tight")
+    plt.show()
+
+def uniqlist(seq):
+    seen = set()
+    seen_add = seen.add
+    return [x for x in seq if not (x in seen or seen_add(x))]
+
+def grab_80perc(comm, df, perc, level, incl_mean=False):
+    #count n ASVs that represent the top 80% of reads
+    df.sort_values(by=['sampleid','ratio'], ascending=[True,False], inplace=True)
+    df['cumul'] = df.groupby('sampleid')['ratio'].transform(pd.Series.cumsum)
+    df_Grouped = df.groupby(['sampleid']).agg({'cumul': [('Count', 'count'),
+                                                                   ('Topn80', lambda x: len(x[x<0.8]))]}).reset_index()
+
+    #find the nearest larger neighbor to 80% (to include the asv that is within the 80%)
+    df['difperc']=(df['cumul']-perc)
+    df1=df[df['difperc'] > 0].groupby('sampleid').min().reset_index().reindex()
+
+    #remove the ASVs not in the 80%
+    df1 = df1[['sampleid', 'cumul']]
+    df1.rename(columns={"cumul": "maxval"}, errors="raise", inplace=True)
+    df = df.merge(df1,on='sampleid')
+    df = df[df['cumul']<df['maxval']] #filter out the ASVs that are less than the 80% of reads
+
+    #subselect only columns of interest
+    df= df[['sampleid', level, 'feature_frequency', 'weekn', 'size_code', 'depth']]
+
+    #get the list of top ASVs from the whole fraction
+    dfW = df[df.size_code == 'W']
+    df3 = dfW.groupby(['weekn', 'depth'])[level].apply(list).reset_index(name='tocompareagainst')
+    df3['weekdpth'] = df3["weekn"].astype(str) + df3["depth"].astype(str)
+
+    #get the list of top ASVs from all the size fractions
+    dfSLSL = df[df.size_code != 'W']
+    df4 = dfSLSL.groupby(['weekn', 'depth','size_code'])[level].apply(list).reset_index(name='tocomparewith')
+    df4['tocomparewith'] = df4['tocomparewith'].apply(lambda x: list(set(x)))
+
+    #merge with the list from Whole
+    df5 = df4.merge(df3, on=['weekn', 'depth'], how='outer')
+
+    #make a list of the top 80% reads ASVs ids
+    df5['tocompareagainst'] = df5['tocompareagainst'].apply(lambda d: d if isinstance(d, list) else [])
+    df5['tocompareagainst'] = df5['tocompareagainst'].apply(lambda x: list(set(x)))
+
+    #make a list of the intersection, i.e. ASVs in top80% of reads shared between any size fraction and W
+    df5['intersection'] = [list(set(a).intersection(set(b)))
+                          for a, b in zip(df5.tocomparewith, df5.tocompareagainst)]
+
+    #make a list of the differences
+    df5['difference'] = df5['tocomparewith'].map(set) - df5['tocompareagainst'].map(set)
+
+    #calculate the size of the intersection as a percetnage
+    df5['lengthinter'] = df5['intersection'].str.len()
+    df5['lengthtotal'] = df5['tocompareagainst'].str.len()
+    df5['lengthperc'] = df5['lengthinter']/df5['lengthtotal']
+    df5[["depth"]] = df5[["depth"]].apply(pd.to_numeric)
+    df5.sort_values(['depth', 'size_code'], inplace=True)
+    df5['weekdpth'] = df5["depth"].astype(str) + df5['size_code'].astype(str)
+
+    #save the output as csv to inspect groups
+    df5.to_csv('outputs/'+comm+'/intersection_with_W'+level+'_'+str(perc)+'.csv')
+
+    ordered_yaxis = df5['weekdpth'].tolist()
+
+    mylist = uniqlist(ordered_yaxis)
+
+
+    glue = df5.pivot(index="weekdpth", columns="weekn", values="lengthperc")
+    glue = glue.reindex(mylist)
+    glue = glue[glue.columns].astype(float)
+    if incl_mean == True:
+        glue['mean'] = glue.mean(axis=1)
+        glue.to_csv('outputs/'+comm+'/interesction_with_W_'+level+'_'+str(perc)+'.csv')
+
+    sns.set_style('ticks')
+    plt.figure(figsize=(5, 4.4))
+
+
+    ax = sns.heatmap(glue, fmt='f', yticklabels=True, linewidths=.5, cmap=sns.color_palette("coolwarm", as_cmap=True))
+    ax.axhline(3, ls='--')
+    ax.axhline(6, ls='--')
+    ax.axhline(9, ls='--')
+    ax.axhline(12, ls='--')
+
+    ax.set_xticks(range(0, 16, 5))
+
+    plt.savefig('outputs/'+comm+'/interesction_with_W_'+level+'_'+str(perc)+'.png', bbox_inches='tight', dpi=300)
+
     plt.show()
