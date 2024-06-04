@@ -2008,3 +2008,51 @@ def grab_80perc(comm, df, perc, level, incl_mean=False):
     plt.savefig('outputs/'+comm+'/interesction_with_W_'+level+'_'+str(perc)+'.png', bbox_inches='tight', dpi=300)
 
     plt.show()
+
+def get_slopes(comm, df):
+    forr2 = df[["nASVs", "weekn", 'sampleid', 'size_code', 'depth']].copy()
+    forr2[["nASVs", "weekn"]] = forr2[["nASVs", "weekn"]].apply(pd.to_numeric)
+    grouped_by_trims = forr2.groupby(['depth','size_code'])
+
+    cols = forr2['size_code'].unique()
+
+    linreg = (grouped_by_trims.apply(lambda x: pd.Series(stats.linregress(x['nASVs'], x['weekn'])))
+            .rename(columns={
+                0: 'slope',
+                1: 'intercept',
+                2: 'rvalue',
+                3: 'pvalue',
+                4: 'stderr'}))
+
+    linreg['r2'] = linreg['rvalue']**2
+    linreg = linreg.reset_index()
+
+
+    tohm = linreg.pivot("depth", "size_code", "slope")
+    tohm['mean'] = tohm.mean(axis=1)
+    tohm['std'] = tohm.std(axis=1)
+    tohm['CV'] = tohm['std']/tohm['mean']
+
+    newcols=[]
+    for col in cols:
+        tohm['z'+col] = (tohm[col]-tohm['mean'])/tohm['std']
+        newcols.append('z'+col)
+
+    z_sc_df = tohm[newcols].copy()
+
+
+    ax = sns.heatmap(tohm,cmap=("coolwarm"), annot=True, annot_kws={"fontsize":10}, cbar_kws={'label': 'Slope (ΔASVs/week'})
+    plt.xlabel('Size fraction')
+    plt.ylabel('Depth (m)')
+    plt.savefig('outputs/'+comm+'/slopes.png', bbox_inches='tight', dpi=300)
+    plt.clf()
+    plt.cla()
+    plt.close()
+
+    ax = sns.heatmap(z_sc_df,cmap=("coolwarm"), annot=True, annot_kws={"fontsize":10}, cbar_kws={'label': 'Z scores'})
+    plt.xlabel('Size fraction')
+    plt.ylabel('Depth (m)')
+    plt.savefig('outputs/'+comm+'/z_scores_slopes.png', bbox_inches='tight', dpi=300)
+    plt.show()
+
+    return tohm, z_sc_df
