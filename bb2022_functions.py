@@ -43,6 +43,10 @@ import scipy.stats as stats
 import statsmodels.api as sa
 import statsmodels.formula.api as sfa
 import scikit_posthocs as spPH
+from sklearn.ensemble import RandomForestClassifier
+from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, recall_score, ConfusionMatrixDisplay
+from sklearn.model_selection import RandomizedSearchCV, train_test_split
+from scipy.stats import randint
 
 # Special thanks to Alex Manuele https://github.com/alexmanuele
 def consolidate_tables(MG, frac=None):
@@ -2056,3 +2060,77 @@ def get_slopes(comm, df):
     plt.show()
 
     return tohm, z_sc_df
+
+
+
+def run_RF(comm, depth, d_spc, newseparated):
+    forrandomforest = d_spc[['feature_id', 'ratio', 'size_code','sampleid']]
+    forrandomforest.drop_duplicates(inplace=True)
+    RF = forrandomforest.pivot(index=['sampleid','size_code'],columns='feature_id', values='ratio').reset_index()
+    RF.drop(columns='sampleid', inplace=True)
+    RF = RF.fillna(0)
+
+    RF['size_code'] = RF['size_code'].map({'S':1,'W':2, 'SL':3, 'L':4})
+
+    # Split the data into features (X) and target (y)
+    X = RF.drop('size_code', axis=1)
+    y = RF['size_code']
+
+    # Split the data into training and test sets
+    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2)
+
+    rf = RandomForestClassifier()
+    rf.fit(X_train, y_train)
+
+    y_pred = rf.predict(X_test)
+
+    accuracy = accuracy_score(y_test, y_pred)
+    print("Accuracy:", accuracy)
+
+    param_dist = {'n_estimators': randint(50,500),
+                  'max_depth': randint(1,20)}
+
+    # Create a random forest classifier
+    rf = RandomForestClassifier()
+
+    # Use random search to find the best hyperparameters
+    rand_search = RandomizedSearchCV(rf, param_distributions = param_dist , n_iter=5, cv=5)
+
+    # Fit the random search object to the data
+    rand_search.fit(X_train, y_train)
+
+    # Create a variable for the best model
+    best_rf = rand_search.best_estimator_
+
+    # Print the best hyperparameters
+    print('Best hyperparameters:',  rand_search.best_params_)
+
+    # Generate predictions with the best model
+    y_pred = best_rf.predict(X_test)
+
+    # Create the confusion matrix
+    cm = confusion_matrix(y_test, y_pred)
+    #ConfusionMatrixDisplay(confusion_matrix=cm).plot();
+
+    accuracy = accuracy_score(y_test, y_pred)
+    precision = precision_score(y_test, y_pred, average='weighted')
+    recall = recall_score(y_test, y_pred, average = 'weighted')
+
+    print("Accuracy:", accuracy)
+    print("Precision:", precision)
+    print("Recall:", recall)
+
+    # Create a series contain feature importances from the model and feature names from the training data
+    feature_importances = pd.Series(best_rf.feature_importances_, index=X_train.columns).sort_values(ascending=False)
+
+    feature_importances20 =feature_importances.head(20)
+    #add taxonomic id to important features
+    if comm == 'chloroplast':
+        tax = newseparated[['feature_id','PRTaxon']].copy()
+    else:
+        tax = newseparated[['feature_id','Taxon', 'Domain', 'Phylum', 'Class', 'Order', 'Family', 'Genus', 'Species']].copy()
+    tax.drop_duplicates(inplace=True)
+    new=feature_importances20.to_frame().reset_index()
+    new = new.merge(tax, how='left', on='feature_id')
+    new.to_csv('outputs/'+comm+'/top10predictors'+str(depth)+'.csv')
+    return new
