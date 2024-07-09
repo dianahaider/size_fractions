@@ -1,0 +1,1 @@
+{"file": "https://raw.githubusercontent.com/dianahaider/size_fractions/main/csvs/02-PROKs/Species_dall_relab.csv", "name": "02-PROKsSpecies", "header": 0, "separator": ",", "skip": 0, "meta": [{"type": "id", "index": 0, "name": "Name"}, {"type": "integer", "index": 4, "name": "Rel. ab."}], "sets": [{"format": "binary", "start": 1, "end": 3}]}

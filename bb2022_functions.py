@@ -1125,7 +1125,7 @@ def upsetprep(comm, level, separated, depth):
     cumulab = separated[['feature_frequency', 'depth', 'size_code', level]].copy()
     cumulab1 = cumulab.groupby([level]).agg({'feature_frequency':sum})
 
-    if d != 'all':
+    if depth != 'all':
         for d in depths:
             #make csv
             sfd=separated[separated.depth==d]
@@ -1143,12 +1143,12 @@ def upsetprep(comm, level, separated, depth):
         resultpivot = resultpivot.fillna(0)
         resultpivot[resultpivot != 0] = 1
         tosave = pd.merge(resultpivot, cumulab1, left_index=True, right_index=True)
-        tosave.to_csv('csvs/'+comm+'/'+level+'_d'+str(d)+'_relab.csv')
+        tosave.to_csv('csvs/'+comm+'/'+level+'_d'+str(depth)+'_relab.csv')
 
 
         #make json
         data = {
-            "file": "https://raw.githubusercontent.com/dianahaider/size_fractions/main/csvs/"+comm+'/'+level+'_d'+str(d)+'_relab.csv',
+            "file": "https://raw.githubusercontent.com/dianahaider/size_fractions/main/csvs/"+comm+'/'+level+'_d'+str(depth)+'_relab.csv',
             "name": comm + level,
             "header": 0,
             "separator": ",",
@@ -1162,7 +1162,7 @@ def upsetprep(comm, level, separated, depth):
             ]
         }
 
-        with open('json/'+comm+'/'+level+'_d'+str(d)+'.json', 'w') as f:
+        with open('json/'+comm+'/'+level+'_d'+str(depth)+'.json', 'w') as f:
             json.dump(data, f)
 
 
@@ -2133,4 +2133,4 @@ def run_RF(comm, depth, d_spc, newseparated):
     new=feature_importances20.to_frame().reset_index()
     new = new.merge(tax, how='left', on='feature_id')
     new.to_csv('outputs/'+comm+'/top10predictors'+str(depth)+'.csv')
-    return new
+    return new, feature_importances
