@@ -1132,38 +1132,38 @@ def upsetprep(comm, level, separated, depth):
     else:
         sfd=separated.copy()
 
-        toptaxa = sfd[['feature_frequency', 'Taxon', 'size_code', 'depth','weekn', level]].copy()
-        toptaxa = toptaxa.drop_duplicates()
-        df_agg = toptaxa.groupby(['size_code',level, 'depth']).agg({'feature_frequency':sum})
+    toptaxa = sfd[['feature_frequency', 'Taxon', 'size_code', 'depth','weekn', level]].copy()
+    toptaxa = toptaxa.drop_duplicates()
+    df_agg = toptaxa.groupby(['size_code',level, 'depth']).agg({'feature_frequency':sum})
 
-        df_agg = df_agg.reset_index()
-        df_agg['set_name'] = df_agg['size_code']+df_agg['depth'].astype(str)
+    df_agg = df_agg.reset_index()
+    df_agg['set_name'] = df_agg['size_code']+df_agg['depth'].astype(str)
 
-        resultpivot = df_agg.pivot_table(index=level, columns='set_name', values='feature_frequency')
-        resultpivot = resultpivot.fillna(0)
-        resultpivot[resultpivot != 0] = 1
-        tosave = pd.merge(resultpivot, cumulab1, left_index=True, right_index=True)
-        tosave.to_csv('csvs/'+comm+'/'+level+'_d'+str(depth)+'_relab.csv')
+    resultpivot = df_agg.pivot_table(index=level, columns='set_name', values='feature_frequency')
+    resultpivot = resultpivot.fillna(0)
+    resultpivot[resultpivot != 0] = 1
+    tosave = pd.merge(resultpivot, cumulab1, left_index=True, right_index=True)
+    tosave.to_csv('csvs/'+comm+'/'+level+'_d'+str(depth)+'_relab.csv')
 
 
-        #make json
-        data = {
-            "file": "https://raw.githubusercontent.com/dianahaider/size_fractions/main/csvs/"+comm+'/'+level+'_d'+str(depth)+'_relab.csv',
-            "name": comm + level,
-            "header": 0,
-            "separator": ",",
-            "skip": 0,
-            "meta":[
-                {"type":"id", "index":0, "name":"Name"},
-                {"type":"integer", "index":4, "name":"Rel. ab."}
-            ],
-            "sets": [
-                {"format": "binary", "start":1, "end": 3}
-            ]
-        }
+    #make json
+    data = {
+        "file": "https://raw.githubusercontent.com/dianahaider/size_fractions/main/csvs/"+comm+'/'+level+'_d'+str(depth)+'_relab.csv',
+        "name": comm + level,
+        "header": 0,
+        "separator": ",",
+        "skip": 0,
+        "meta":[
+            {"type":"id", "index":0, "name":"Name"},
+            {"type":"integer", "index":4, "name":"Rel. ab."}
+        ],
+        "sets": [
+            {"format": "binary", "start":1, "end": 3}
+        ]
+    }
 
-        with open('json/'+comm+'/'+level+'_d'+str(depth)+'.json', 'w') as f:
-            json.dump(data, f)
+    with open('json/'+comm+'/'+level+'_d'+str(depth)+'.json', 'w') as f:
+        json.dump(data, f)
 
 
 # In[ ]:
