@@ -1126,9 +1126,7 @@ def upsetprep(comm, level, separated, depth):
     cumulab1 = cumulab.groupby([level]).agg({'feature_frequency':sum})
 
     if depth != 'all':
-        for d in depths:
-            #make csv
-            sfd=separated[separated.depth==d]
+        sfd=separated[separated.depth==depth]
     else:
         sfd=separated.copy()
 
