@@ -119,8 +119,6 @@ def consolidate_tables(MG, frac=None):
     return df, comm
 
 
-# In[ ]:
-
 
 def merge_metadata(df, all_md):
     #df = pd.read_csv('02-PROKs/'+'/merged_all_tables.tsv', sep='\t')
@@ -164,9 +162,6 @@ def merge_metadata(df, all_md):
     print('Saved merged_asvs_metadata.tsv')
 
     return merged
-
-
-# In[ ]:
 
 def make_defract(all_md, separated):
     #make sure all size codes are indicated
@@ -392,8 +387,69 @@ def SRA_pairs(comm, SFX, SFY, separated, outliers='None', view=False):
 
     return df_results
 
-# In[ ]:
+def timeseries_fid(newseparated, f_id, scl, depth):
+    #if all size codes
+    newseparated['weekfid'] = newseparated["weekn"].astype(str) + newseparated["feature_id"].astype(str)
+    d_spc = newseparated[newseparated.depth == depth]
 
+    #if only SL and W
+    #d_spc = newsep2[newsep2.depth == depth]
+
+    d_spc_c = d_spc[d_spc.feature_id == f_id]
+    #d_spc_c = d_spc[d_spc.Genus == scl]
+
+    sizecodes = ['S', 'L', 'W', 'SL', 'P']
+    palette_colors = sns.color_palette()
+    palette_dict = {sizecode: color for sizecode, color in zip(sizecodes, palette_colors)}
+
+    sel_cols = d_spc_c[['weekn', 'ratio', 'size_code', 'weekfid']].copy()
+    sel_cols.drop_duplicates(inplace=True)
+    sel_cols["weekn"] = pd.to_numeric(sel_cols["weekn"])
+    #make sure each size code has 16weeks
+    sel_cols = (sel_cols.set_index(["size_code", "weekn"])
+                .reindex(pd.MultiIndex.from_product([sel_cols["size_code"].unique(), [1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16]],
+                                                    names=["size_code", "weekn"]))
+                .reset_index()[sel_cols.columns])
+    #make sure each week has all fractions
+    sel_cols = (sel_cols.set_index(["weekn","size_code"])
+                .reindex(pd.MultiIndex.from_product([sel_cols["weekn"].unique(), ["S", "L", "SL", "W"]],
+                                                    names=["weekn","size_code"]))
+                .reset_index()[sel_cols.columns])
+    #fill with 0
+    sel_cols.fillna(0, inplace=True)
+
+
+    custom_params = {"axes.spines.right": False, "axes.spines.top": False}
+    sns.set_theme(style="ticks", rc=custom_params)
+
+    #g = sns.lmplot(x="weekn", y="ratio", data=sel_cols, truncate=True,
+    #           lowess=True, ci=None, scatter_kws={"s": 80}, hue='size_code', palette=palette_dict)
+
+
+    sel_cols['W_per_wk'] = sel_cols['ratio'].groupby(sel_cols['weekfid']).transform('mean')
+    sfd['diff_p_id'] = sfd['ratio'] - sfd['avg_p_id']
+
+    g = sns.lineplot(x="weekn", y="ratio", data=sel_cols, hue='size_code',
+                     palette=palette_dict, marker='o')
+
+
+    sns.move_legend(g, "upper left", bbox_to_anchor=(1, 1))
+
+    g.set_xticks(np.arange(1, 16.5, 1))
+    g.figure.set_size_inches(5,3.5)
+
+    if "__" in scl:
+        plt.title(scl.split('__')[1] +', '+str(depth)+ 'm')
+    else:
+        plt.title(scl +', '+str(depth)+ 'm')
+
+    # Set x-axis label
+    plt.xlabel('Time (weeks)')
+    # Set y-axis label
+    plt.ylabel('Relative abundance')
+    #plt.ylabel('Rank')
+
+    plt.savefig('outputs/'+comm+'/D'+str(depth)+scl+f_id+'_lineplot.png', dpi=200, bbox_inches="tight")
 
 def taxbarplot(separated, level, depth, topn, palette_dict, colrow): #separated is the df, #level is a string of taxonomic level column name, depth is an integer
     sfd=separated[separated.depth==depth]
@@ -646,6 +702,45 @@ def pcaplot(separated, depth, comm, columnperm, spc, colrow):
     plot_df2.to_csv('R_results/R_testing_vis/'+str(depth)+comm+'for_R.csv')
 
     return pca, pca_features, sfdclr, distance_matrix
+
+def rarefy_curve(comm, newseparated):
+    if 'SL' in newseparated['size_code'].unique():
+        #sizecode palette codes
+        sizecodes = ['S', 'L', 'W', 'SL', 'P']
+        palette_colors = sns.color_palette()
+        palette_dict = {sizecode: color for sizecode, color in zip(sizecodes, palette_colors)}
+        dicsc = pd.Series(newseparated.size_code.values,index=newseparated.sampleid).to_dict()
+        color_rows_sc = {k: palette_dict[v] for k, v in dicsc.items()}
+        seriescr = pd.Series(color_rows_sc)
+
+    else:
+        #sizecode palette codes
+        sizecodes = ['S', 'L', 'W', 'P']
+        palette_colors = sns.color_palette()
+        palette_dict = {sizecode: color for sizecode, color in zip(sizecodes, palette_colors)}
+        dicsc = pd.Series(newseparated.size_code.values,index=newseparated.sampleid).to_dict()
+        color_rows_sc = {k: palette_dict[v] for k, v in dicsc.items()}
+        seriescr = pd.Series(color_rows_sc)
+
+    ax=sns.lineplot(data=newseparated, x="Total", y="nASVs", hue="size_code", marker="o", linestyle=(0, (1, 10)),
+                   palette=palette_dict)
+    ax.set(xlabel='Sequences per sample', ylabel='Observed richness')
+
+    sns.move_legend(ax, "upper left", bbox_to_anchor=(1, 1))
+    sns.despine()
+    plt.clf()
+    plt.savefig('outputs/'+comm+'_rarefaction_curve.png', dpi=200, bbox_inches="tight")
+
+
+    ax=sns.scatterplot(data=newseparated, x="Total", y="nASVs", hue="size_code", marker="o",
+                   palette=palette_dict)
+    ax.set(xlabel='Sequences per sample', ylabel='Observed richness')
+
+    sns.move_legend(ax, "upper left", bbox_to_anchor=(1, 1))
+    sns.despine()
+
+    plt.savefig('outputs/'+comm+'_rarefaction_curve_noline.png', dpi=200, bbox_inches="tight")
+
 
 def roll_avg(comm, table, depth, col, rollingavg=4):
     new2 = table.set_index('weekn')
