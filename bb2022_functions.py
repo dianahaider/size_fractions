@@ -1,7 +1,4 @@
 #!/usr/bin/env python
-# coding: utf-8
-
-# In[ ]:
 
 #for importing, formatting and data manipulation
 import pandas as pd
@@ -11,6 +8,8 @@ import tempfile
 from qiime2 import Artifact
 import yaml
 import json
+import os
+import re
 
 #for plotting
 import matplotlib, random
@@ -18,6 +17,9 @@ import matplotlib.pyplot as plt
 from matplotlib_venn import venn3, venn3_circles
 from matplotlib.patches import Patch
 import seaborn as sns
+from collections import Counter
+from collections import defaultdict
+
 #sns.set(style="whitegrid")
 import plotly.express as px
 from IPython.display import display
@@ -48,12 +50,15 @@ from sklearn.metrics import accuracy_score, confusion_matrix, precision_score, r
 from sklearn.model_selection import RandomizedSearchCV, train_test_split
 from scipy.stats import randint
 
+from plyer import notification
+
 # Special thanks to Alex Manuele https://github.com/alexmanuele
 def consolidate_tables(MG, frac=None):
-    if MG == '16S':
+    if MG == '16S' or  MG == 'chloroplast':
         comm = '02-PROKs'
-    else :
+    elif MG == '18S' :
         comm = '02-EUKs'
+    print('Community is '+comm)
 
     if frac==None:
         table_list = glob.glob('{0}/dada2_SF/table.qza'.format('/Users/Diana/Documents/escuela/phd/size_fractions/BB22_size-fraction-comparison-analysed/to_transfer/'+comm))
@@ -116,6 +121,10 @@ def consolidate_tables(MG, frac=None):
     df['sample_name'] = df['sample_name'].str.replace(r'\.LandS.S([1-9]|[1-9][0-9]|[1-9][0-9][0-9]).L001','P', regex=True)
     #df.to_csv(comm+'/merged_all_tables.tsv', sep='\t', index=False)
     print("Successfully saved all tables.")
+
+    if MG == 'chloroplast':
+        comm = 'chloroplast'
+
     return df, comm
 
 
@@ -240,6 +249,9 @@ def make_defract(all_md, separated):
     newseparated['avg'] = newseparated['nASVs'].groupby(newseparated['weekdepth']).transform('mean')
     newseparated['diff'] = newseparated['nASVs'] - newseparated['avg']
 
+    newseparated["rank"] = newseparated.groupby("sampleid")["ratio"].rank(method="average", ascending=False)
+    newseparated["ranktot"] = newseparated['rank'] / newseparated['nASVs']
+
     return newseparated
 
 def outlier(df):
@@ -256,7 +268,7 @@ def outlier(df):
     return new_df
 
 
-def pick_metadata(merged, depth='all', size_fraction='both', year='all', R='all', F='all', txsubset = 'all'):
+def pick_metadata(comm, merged, depth='all', size_fraction='both', year='all', R='all', F='all', txsubset = 'all'):
 #make df of features/composition+run+comm
 
     depth = depth
@@ -299,8 +311,48 @@ def pick_metadata(merged, depth='all', size_fraction='both', year='all', R='all'
     #make a dictionary with keys for id-ing the taxon belonging to this sub-community
     #separated_dic = pd.Series(separated.Taxon.values,separated.feature_id.values).to_dict()
     print('Saved separated by metadata dataframe.')
+    print('Community is '+comm)
 
-    return separated
+    contaminants = None
+    if comm in ['02-PROKs', '02-EUKS']:
+        searchfor = ["Cyanobacteria", "Chloroplast"]
+        contaminants = separated[separated.Taxon.str.contains('|'.join(searchfor))]
+        separated = separated[~separated.Taxon.str.contains('|'.join(searchfor))]
+        separated = separated.reset_index(drop=True)
+        print('Removed cyanobacteria and chloroplast from '+comm)
+
+        #re-calculate ratios when removing chloroplast for 16S or 18S
+        separated['Total'] = separated['feature_frequency'].groupby(separated['sampleid']).transform('sum')
+        separated['ratio'] = separated['feature_frequency']/separated['Total']
+        separated['nASVs'] = separated['feature_id'].groupby(separated['sampleid']).transform('count')
+        separated['weekdepth'] = separated["weekn"].astype(str) + separated["depth"].astype(str)
+        separated['avg'] = separated['nASVs'].groupby(separated['weekdepth']).transform('mean')
+        separated['diff'] = separated['nASVs'] - separated['avg']
+
+    elif comm == 'chloroplast':
+        #run these lines to switch to chloroplast comm
+        searchfor = ["Cyanobacteria", "Chloroplast"]
+        contaminants = separated[separated.Taxon.str.contains('|'.join(searchfor))]
+        separated = contaminants.copy()
+        separated = separated.reset_index(drop=True)
+        comm = 'chloroplast'
+        print('Switched to cyanobacteria and chloroplast')
+
+        #add phytorep taxonomy
+        cp_tax = pd.read_csv('chloroplast/taxonomy.tsv', sep='\t')
+        cp_tax = cp_tax.rename(columns={"Feature ID": "feature_id", "Taxon": "PRTaxon", "Confidence":"PRConfidence"})
+        separated = pd.merge(separated, cp_tax, on="feature_id", how="left")
+        separated['PRSpecies'] = separated['PRTaxon'].str.split('|').str[-1]
+
+        #re-calculate ratios when removing chloroplast for 16S
+        separated['Total'] = separated['feature_frequency'].groupby(separated['sampleid']).transform('sum')
+        separated['ratio'] = separated['feature_frequency']/separated['Total']
+        separated['nASVs'] = separated['feature_id'].groupby(separated['sampleid']).transform('count')
+        separated['weekdepth'] = separated["weekn"].astype(str) + separated["depth"].astype(str)
+        separated['avg'] = separated['nASVs'].groupby(separated['weekdepth']).transform('mean')
+        separated['diff'] = separated['nASVs'] - separated['avg']
+
+    return separated, contaminants
 
 
 def SRA_pairs(comm, SFX, SFY, separated, outliers='None', view=False):
@@ -387,7 +439,7 @@ def SRA_pairs(comm, SFX, SFY, separated, outliers='None', view=False):
 
     return df_results
 
-def timeseries_fid(newseparated, f_id, scl, depth):
+def timeseries_fid(comm, newseparated, f_id, scl, depth):
     #if all size codes
     newseparated['weekfid'] = newseparated["weekn"].astype(str) + newseparated["feature_id"].astype(str)
     d_spc = newseparated[newseparated.depth == depth]
@@ -427,7 +479,7 @@ def timeseries_fid(newseparated, f_id, scl, depth):
 
 
     sel_cols['W_per_wk'] = sel_cols['ratio'].groupby(sel_cols['weekfid']).transform('mean')
-    sfd['diff_p_id'] = sfd['ratio'] - sfd['avg_p_id']
+    sel_cols['diff_p_id'] = sel_cols['ratio'] - sel_cols['W_per_wk']
 
     g = sns.lineplot(x="weekn", y="ratio", data=sel_cols, hue='size_code',
                      palette=palette_dict, marker='o')
@@ -451,8 +503,31 @@ def timeseries_fid(newseparated, f_id, scl, depth):
 
     plt.savefig('outputs/'+comm+'/D'+str(depth)+scl+f_id+'_lineplot.png', dpi=200, bbox_inches="tight")
 
-def taxbarplot(separated, level, depth, topn, palette_dict, colrow): #separated is the df, #level is a string of taxonomic level column name, depth is an integer
-    sfd=separated[separated.depth==depth]
+def taxbarplot(comm, table, level, depth, topn, colrow): #separated is the df, #level is a string of taxonomic level column name, depth is an integer
+    if comm == 'chloroplast':
+        level = 'PRTaxon'
+
+    #get a list of top taxa to provide the palette for the visualisation
+    toptaxa = table[['feature_frequency', 'Taxon', 'size_code', 'depth','weekn', level]].copy()
+    toptaxa = toptaxa.drop_duplicates()
+    df_agg = toptaxa.groupby(['size_code',level, 'depth']).agg({'feature_frequency':sum})
+    topd = df_agg['feature_frequency'].groupby(['size_code', 'depth'], group_keys=False).nlargest(topn)
+    topd = topd.to_frame()
+    topd = topd.reset_index()
+    listoftop = topd[level].unique()
+
+    #set a palette for the toptaxa
+    hex_colors_dic = {}
+    rgb_colors_dic = {}
+    hex_colors_only = []
+    for name, hex in matplotlib.colors.cnames.items():
+        hex_colors_only.append(hex)
+        hex_colors_dic[name] = hex
+        rgb_colors_dic[name] = matplotlib.colors.to_rgb(hex)
+
+    palette_dict = {taxon: color for taxon, color in zip(listoftop, px.colors.sequential.Plasma)}
+
+    sfd=table[table.depth==depth]
     toptaxa = sfd[['feature_frequency', 'Taxon', 'size_code', 'depth','weekn', level]].copy()
     toptaxa = toptaxa.drop_duplicates()
     df_agg = toptaxa.groupby(['size_code',level, 'depth']).agg({'feature_frequency':sum})
@@ -464,14 +539,14 @@ def taxbarplot(separated, level, depth, topn, palette_dict, colrow): #separated 
     df_agg = df_agg.reset_index()
     df_agg['set_name'] = df_agg['size_code']+df_agg['depth'].astype(str)
 
-    cumulab = separated[['feature_frequency', 'depth', 'size_code', 'Genus']].copy()
-    cumulab1 = cumulab.groupby(['Genus']).agg({'feature_frequency':sum})
+    cumulab = table[['feature_frequency', 'depth', 'size_code', level]].copy()
+    cumulab1 = cumulab.groupby([level]).agg({'feature_frequency':sum})
 
     resultpivot = df_agg.pivot_table(index=level, columns='set_name', values='feature_frequency')
     resultpivot = resultpivot.fillna(0)
     resultpivot[resultpivot != 0] = 1
     tosave = pd.merge(resultpivot, cumulab1, left_index=True, right_index=True)
-    tosave.to_csv(level+'_'+str(depth)+'16S_relab.csv')
+    tosave.to_csv('outputs/'+comm+'/relab'+level+'_'+str(depth)+'.csv')
 
     top10d_list = topd[level].unique()
     top10d = sfd.copy()
@@ -484,7 +559,7 @@ def taxbarplot(separated, level, depth, topn, palette_dict, colrow): #separated 
                      "feature_frequency": "Relative abundance",
                      "size_code": "",
                      "weekn": "w"}, color_discrete_map=palette_dict,
-    hover_data=["Taxon"])
+    hover_data=[level])
     fig.update_xaxes(type='category', dtick=1)
     fig.update_layout(
         #title= text="Relative abundance of top"+str(topn) + level + 'observed at Depth' + str(depth),
@@ -703,6 +778,43 @@ def pcaplot(separated, depth, comm, columnperm, spc, colrow):
 
     return pca, pca_features, sfdclr, distance_matrix
 
+def dnacon(newseparated, depth='all'):
+    if depth != 'all':
+        df=newseparated[newseparated.depth==depth]
+
+    sorted_data = newseparated[["weekn", "[DNA]ng/ul", "size_code",'depth',
+                                'date']].sort_values(by=["weekn", "size_code", 'depth'])
+    filtered_df = sorted_data[sorted_data["size_code"] != "SL"]
+    filtered_df.drop_duplicates().sort_values('[DNA]ng/ul')
+
+    sizecodes = ['S', 'L', 'W', 'SL']
+    palette_colors = sns.color_palette()
+    palette_dict = {sizecode: color for sizecode, color in zip(sizecodes, palette_colors)}
+
+    plt.figure(figsize=(12, 6))
+    sns.barplot(
+        data=filtered_df,
+        x="date",
+        y="[DNA]ng/ul",
+        hue="size_code",
+        palette=palette_dict
+    )
+
+    plt.xlabel("Time", fontsize=12)
+    plt.ylabel("DNA Concentration (ng/µl)", fontsize=12)
+    plt.legend(title="Size Code", fontsize=10, title_fontsize=12)
+    plt.xticks(fontsize=10)
+    plt.yticks(fontsize=10)
+
+    # Display the plot
+    plt.tight_layout()
+    plt.savefig("outputs/grouped_bar_dnaconc"+str(depth)+".png", dpi=300, bbox_inches="tight")
+    plt.show()
+
+
+
+
+
 def rarefy_curve(comm, newseparated):
     if 'SL' in newseparated['size_code'].unique():
         #sizecode palette codes
@@ -869,6 +981,43 @@ def roll_avg(comm, table, depth, col, rollingavg=4):
     plt.title('Trend of nASVs at depth' + str(depth), loc='left', weight='bold')
 
     plt.savefig('outputs/'+comm+'/D'+str(depth)+'_nasvtrend.png', dpi=200, bbox_inches="tight")
+
+#replacement dictionary for unidentified genus ASV for top 20 ASVs
+def apply_replacement(df, column_to_map, column_to_update):
+    #incl. 18s, 16s, chloro
+    replacement_dict = {'d2d1baa1b5487ea6da52cbe74835d92e': 'Unknown Dinophyceae', #18s
+                      '206758a86c52c6b169e5aea9769ee8a3': 'Unknown Dinophyceae',
+                      'f748ff93828e750fa8212b0c15ebb312': 'Unknown Dinophyceae',
+                      'ea8b5924f9a6a3cf089fb3f5c2ce00b1': 'Unknown Dinophyceae',
+                      'ec0cef5115e1a5e72ba718c19f44ac1e': 'Unknown Dinophyceae',
+                      '4ad35c9c4bc721fe9b6a63b0351e2527': 'Unknown Oligotracheae',
+                      '6071d3037004f54c1009530f02f29072': 'Uncultured synidiales',
+                      'd98e045a8124335c3f7422745eb649df': 'Unknown Dinophyceae',
+                      '43a118280860f972f1ee6c8813ee31ce': 'Uncultured Spirotrichea',
+                      '2949e15fb8d243ac547148c767e37505': 'Uncultured Choreotrichia',
+                      '8ec8ff981ab1011dda5943044363126d': 'Skeletonema',
+                      '334feb949bba92d67ce2d15e5517f30d': 'Pseudo-nitzschia',
+                      '352da949fea628d994cfa85942d0fd95': 'Pseudopedinella',
+                      'a6403cc4635bf5216e10d8724763fb72': 'Guinardia-like',
+                      '6c987094eb76bff568a4499383aa85e6': 'unclassified Cryptophyta',
+                      '1f6540f210aa24caa4354afe31cf8e7c': 'Guinardia-like',
+                      'd540a1d35a894bc8e3ce9e2413c61dd1': 'Obscuribacteraceae',
+                      '7338e9edfef034ec21924ff03d3f4417': 'Synechococcus_CC9902',
+                      '9dbe1d31f92323dcbdcc77903c6bba89': 'Unidentified Chrysophyceae',
+                      'fcc8273752120d2dc6503688d9986f2e': 'Melanoseris',
+                      'd64d4fd57ebe3985f0fbc3f68fd18aa0': 'Unidentified Caenarcaniphilales'}
+    # Create a new column based on the mapping
+    updated_column = df[column_to_map].map(replacement_dict).fillna(df[column_to_update])
+
+    # Check if changes were made
+    if (df[column_to_update] == updated_column).all():
+        print("Nothing to change")
+    else:
+        print("Values were updated")
+
+    # Update the DataFrame column
+    df[column_to_update] = updated_column
+    return df
 
 
 def detect_anomalies(metadata, df, dpt, yr=all, month=all):
@@ -1295,18 +1444,103 @@ def plot_per_fid(comm, separated, depth, fid):
     plt.savefig('outputs/'+comm+'/D'+str(depth)+fid+'.png', dpi=200, bbox_inches="tight")
 
 
-# In[ ]:
-
-
 def run_ancom(comm, separated, sfdclr, depth, ancomcol):
+    # Assign group labels to the samples based on depth
+    sfd = separated[separated.depth == depth]
+    df_ancom = sfd[['sampleid', ancomcol]].copy().drop_duplicates().set_index('sampleid')
 
+    # Run ANCOM on the CLR-transformed table
+    results = ancom(table=sfdclr, grouping=df_ancom[ancomcol], multiple_comparisons_correction='holm-bonferroni')
+    DAresults = results[0].copy()  # Contains W values and significance
+
+    # Taxonomy information for chloroplasts or other communities
+    if comm == 'chloroplast':
+        taxonomy = sfd[['feature_id', 'PRConfidence', 'PRTaxon', 'PRSpecies']].drop_duplicates()
+    else:
+        taxonomy = sfd[['feature_id', 'Confidence', 'Taxon', 'Phylum', 'Class', 'Family', 'Genus', 'Species']].drop_duplicates()
+    DAtaxonomy = pd.merge(DAresults, taxonomy, on="feature_id", how="left")
+
+    # Extract the significant features for further analysis
+    DARejected_SC = DAtaxonomy.loc[DAtaxonomy['Reject null hypothesis'] == True].sort_values(by=['W'])
+
+    # Calculate CLR mean values for each feature within each group
+    clr_means = sfdclr.copy()
+    clr_means['group'] = df_ancom[ancomcol]  # Assign group labels
+    clr_means_grouped = clr_means.groupby('group').mean().T  # Mean CLR per group
+
+    # Calculate the standard deviation of CLR mean values across groups
+    clr_means_grouped['clr_mean_std_dev'] = clr_means_grouped.std(axis=1)
+
+    # Merge the W values and CLR mean standard deviations for the volcano plot
+    volcano_df = DAresults.copy()
+    volcano_df['clr_mean_std_dev'] = clr_means_grouped['clr_mean_std_dev']
+    volcano_df = pd.merge(volcano_df, taxonomy, on="feature_id", how="left")  # Add taxonomy for labeling
+
+    # Define threshold for highlighting significant features
+    w_threshold = volcano_df['W'].quantile(0.95)  # e.g., 95th percentile of W as significance threshold
+    std_dev_threshold = 0.5  # Example threshold for CLR standard deviation
+
+
+
+    # Create the Volcano Plot with Enhanced Visualization
+    plt.figure(figsize=(12, 8))
+    sns.scatterplot(
+        x='clr_mean_std_dev',
+        y='W',
+        data=volcano_df,
+        hue='Reject null hypothesis',
+        palette={True: "red", False: "blue"},
+        alpha=0.6,
+        edgecolor="k",
+        s=80
+    )
+
+    # Highlight top significant taxa
+    for _, row in volcano_df[(volcano_df['W'] > w_threshold) |
+                             (volcano_df['clr_mean_std_dev'] > std_dev_threshold)].iterrows():
+        # Determine the label based on the community type
+        if comm == 'chloroplast' and pd.notnull(row['PRSpecies']):
+            label = row['PRSpecies']
+        elif pd.notnull(row['Genus']):
+            label = row['Genus']
+        else:
+            label = row['feature_id']
+
+        plt.text(
+            row['clr_mean_std_dev'],
+            row['W'],
+            label,
+            fontsize=9,
+            ha='right' if row['clr_mean_std_dev'] > 0 else 'left',
+            color="black"
+        )
+
+    # Add plot labels and title
+    plt.axhline(y=w_threshold, color='grey', linestyle='--', label='Significance Threshold (95th percentile)')
+    plt.xlabel('Standard Deviation of CLR Mean Abundance')
+    plt.ylabel('W Statistic')
+    plt.title('Enhanced ANCOM Volcano Plot for Multiple Groups')
+    plt.legend(title="Significance")
+    plt.grid(True)
+    plt.tight_layout()
+
+    # Save the plot as an image file
+    plt.savefig('outputs/'+comm+'/D'+str(depth)+'volcano_plot.png', dpi=300, bbox_inches="tight")
+    plt.close()  # Close the plot to free memory if running in a loop or batch processing
+
+    prcentile = results[1].copy()  # Contains percentile abundance per group
+
+    return DAtaxonomy, DARejected_SC, prcentile
+
+
+def run_ancoms(comm, separated, sfdclr, depth, ancomcol):
+    #sfd is used to assign group labels to the samples
     sfd=separated[separated.depth==depth]
-
-
     df_ancom = sfd[['sampleid', ancomcol]].copy()
     df_ancom = df_ancom.drop_duplicates()
     df_ancom = df_ancom.set_index('sampleid')
 
+    #sfdclr is the clr transformed table (columns are asvs, rows are samples)
     results = ancom(table=sfdclr, grouping=df_ancom[ancomcol], multiple_comparisons_correction='holm-bonferroni')
     DAresults = results[0].copy()
 
@@ -1977,8 +2211,57 @@ def calcperc_LS_W(comm, separated, level):
 
     return dfplot, dfplot_normalized, level
 
+def heatmap_top1(comm, sfd, level):
+    if comm == 'chloroplast':
+        level = 'PRSpecies'
+    else:
+        level = level
 
-# In[ ]:
+    toptaxa = sfd[['feature_id', 'feature_frequency', 'Taxon', 'size_code', 'depth', 'weekn', level]].copy()
+    toptaxa.loc[toptaxa[level].isin(['Unassigned', 'uncultured+bacterium', 'g__uncultured']), level] = toptaxa['feature_id']
+
+    toptaxa = toptaxa.drop_duplicates()
+
+    df_agg = toptaxa.groupby(['size_code', level, 'depth', 'weekn']).agg({'feature_frequency': sum})
+    topd = df_agg['feature_frequency'].groupby(['size_code', 'depth', 'weekn'], group_keys=False).nlargest(1).reset_index()
+
+    unique_genera = topd[level].unique()
+    type_dic = {genus: i for i, genus in enumerate(unique_genera[::-1], start=1)}
+
+    topd['comm_type'] = topd[level].map(type_dic)
+
+    topd["sc_weekn"] = topd["depth"].astype(str) + topd["size_code"]
+
+    topd = topd.sort_values(['depth', 'size_code'])
+
+    topdlist = topd['sc_weekn'].unique()
+
+    glue = topd.pivot(index="sc_weekn", columns="weekn", values="comm_type")
+    glue = glue.reindex(topdlist)
+    glue = glue[glue.columns].astype(float)
+
+    cmap = plt.get_cmap('tab20', len(type_dic))
+
+    sns.set_style('ticks')
+    plt.figure(figsize=(5, 5))
+
+    ax = sns.heatmap(glue, fmt='f', yticklabels=True, linewidths=.5, cmap=cmap)
+
+    colorbar = ax.collections[0].colorbar
+    colorbar.set_ticks([val + 0.5 for val in range(len(type_dic))])
+    colorbar.set_ticklabels([genus for genus in type_dic.keys()])
+
+    ax.axhline(4, ls='--')
+    ax.axhline(8, ls='--')
+    ax.axhline(12, ls='--')
+    ax.axhline(16, ls='--')
+
+    ax.set_xticks(range(0, 16, 5))
+    ax.set_ylabel("Depth and Size Code")
+    ax.set_xlabel("Week Number")
+
+    plt.savefig(f'outputs/{comm}/heatmap_top1_{level}.png', bbox_inches='tight', dpi=300)
+    plt.show()
 
 
 #subtitle = 'From Jan7 2022 to Apr27 2022'
@@ -2227,3 +2510,373 @@ def run_RF(comm, depth, d_spc, newseparated):
     new = new.merge(tax, how='left', on='feature_id')
     new.to_csv('outputs/'+comm+'/top10predictors'+str(depth)+'.csv')
     return new, feature_importances
+
+def notify():
+    os.system('osascript -e \'display notification "Your code has finished running!" with title "Jupyter Notebook"\'')
+
+#from chatgpt
+
+def count_feature_id_presence_with_depth_and_W(directory_path, comm):
+    """
+    Counts feature ID presence, depth, and W sum for the given directory and community.
+
+    Args:
+    - directory_path: The base directory where the ANCOM files are located.
+    - comm: The community type to locate the specific folder within ANCOM (e.g., chloroplast).
+
+    Returns:
+    - A list summarizing feature ID presence and W value information.
+    """
+    # Dictionary to track files, depths, and sum of W values for each feature_id
+    feature_id_info = defaultdict(lambda: {"file_count": 0, "depths": set(), "files": set(), "W_sum": 0})
+
+    # Regex pattern to match depth in file names and ensure "Trueonly" is present
+    depth_pattern = re.compile(r"_D(1|5|10|30|60)_.*Trueonly")
+
+    # Construct the path to the community folder
+    search_path = os.path.join(directory_path, 'ANCOM', comm)
+    #print(f"Searching in directory: {search_path}")
+
+    # Walk through the community folder and all its subfolders to find all matching CSV files
+    for root, dirs, files in os.walk(search_path):
+        for file in files:
+            if file.endswith(".csv"):
+                #print(f"Considering file: {file}")  # Debugging: print all CSV files found
+                if depth_pattern.search(file):
+                    #print(f"File matches depth pattern: {file}")  # Debugging: print files that match depth pattern
+                    file_path = os.path.join(root, file)
+
+                    # Load CSV file
+                    try:
+                        df = pd.read_csv(file_path)
+                    except Exception as e:
+                        print(f"Error reading file {file_path}: {e}")
+                        continue
+
+                    # Check if 'feature_id' and 'W' columns exist
+                    if 'feature_id' in df.columns and 'W' in df.columns:
+                        #print(f"File {file_path} contains required columns")  # Debugging: Confirm file has required columns
+                        # Get unique feature_ids in this file
+                        for _, row in df.iterrows():
+                            feature_id = row['feature_id']
+                            W_value = row['W']
+
+                            # Increment file count only once per file for each feature_id
+                            if file_path not in feature_id_info[feature_id]["files"]:
+                                feature_id_info[feature_id]["file_count"] += 1
+                                feature_id_info[feature_id]["files"].add(file_path)
+
+                            # Add depth to the set of depths for this feature_id
+                            feature_id_info[feature_id]["depths"].add(f"Depth_{depth_pattern.search(file).group(1)}")
+
+                            # Sum the W value
+                            feature_id_info[feature_id]["W_sum"] += W_value
+                    else:
+                        print(f"Skipped {file_path}: 'feature_id' or 'W' column missing")
+
+    # Convert to a list sorted by file count for easier readability
+    feature_id_summary = sorted(
+        [(feature_id, info["file_count"], sorted(info["depths"]), sorted(info["files"]), info["W_sum"])
+         for feature_id, info in feature_id_info.items()],
+        key=lambda x: x[1],
+        reverse=True
+    )
+
+    #print(f"Collected feature_id_info: {dict(feature_id_info)}")  # Debugging: Print final collected data
+    return feature_id_summary
+
+
+def taxonomic_barplots(comm, table, depths, level, n=15):
+    if comm == 'chloroplast':
+        level = 'PRSpecies'
+
+    # Filter data for the relevant depths
+    sfd_all = table[table['depth'].isin(depths)]
+
+    # Replace "Unassigned" or "uncultured+bacterium" at the given level with its 'feature_id'
+    sfd_all[level] = sfd_all.apply(
+        lambda row: row['feature_id'] if row[level] in ['Unassigned', 'uncultured+bacterium', 'c__uncultured', 'g__uncultured'] else row[level],
+        axis=1
+    )
+
+    # Aggregate data globally to find the most abundant taxa across all depths
+    global_abundance = sfd_all.groupby(level)['ratio'].sum().sort_values(ascending=False)
+
+    # Select the top n most abundant taxa globally
+    top_taxa = global_abundance.head(n - 1).index.tolist()
+
+    # Create a new column to group less abundant taxa into "Other"
+    sfd_all['plot_taxa'] = sfd_all[level].apply(lambda x: x if x in top_taxa else 'Other')
+
+    # Format taxa labels for the legend (remove prefixes and "__")
+    def format_taxa_label(taxon):
+        return taxon.split("__")[-1]
+
+    # Create a global discrete color palette for taxa
+    unique_taxa = ['Other'] + top_taxa  # Ensure "Other" is always included and listed first
+    n_taxa = len(unique_taxa)
+
+    # Use a categorical colormap with up to 15 unique colors
+    color_palette = plt.get_cmap('tab20').colors  # tab20 provides up to 20 colors
+    color_dict = {taxon: color_palette[i % len(color_palette)] for i, taxon in enumerate(unique_taxa)}
+
+    # Generate stacked bar plots for each depth
+    for depth in depths:
+        sfd = sfd_all[sfd_all['depth'] == depth]
+
+        # Sort data by 'weekn' to ensure the correct order
+        sfd = sfd.sort_values(by='weekn')
+
+        size_codes = sfd['size_code'].unique()
+
+        for idx, size_code in enumerate(size_codes):
+            # Filter data for the current size_code
+            top10d = sfd[sfd['size_code'] == size_code].copy()
+            phyld = top10d.groupby(['weekn', 'date', 'plot_taxa'])['ratio'].sum().reset_index()
+
+            # Pivot the DataFrame to prepare for stacked bar plotting
+            phyld_pivot = phyld.pivot(index=['weekn', 'date'], columns='plot_taxa', values='ratio').fillna(0).reset_index()
+
+            # Determine x positions based on the 'weekn' order
+            phyld_pivot = phyld_pivot.sort_values(by='weekn')  # Ensure data is ordered by weekn
+            dates = phyld_pivot['date']  # Dates corresponding to the week numbers
+            x = np.arange(len(dates))  # Positions for bars
+
+            # Initialize stack heights
+            bottom_stack = np.zeros(len(x))
+
+            # Initialize the plot
+            fig, ax1 = plt.subplots(figsize=(15, 7))
+
+            # Iterate over each taxon and stack their relative abundances
+            taxa_categories = phyld_pivot.columns[2:]  # Skip 'weekn' and 'date'
+            for taxon in taxa_categories:
+                # Aggregate taxon values by date
+                heights = phyld_pivot[taxon].values
+
+                # Plot the stacked bar for this taxon
+                ax1.bar(
+                    x,  # X positions
+                    heights,  # Heights of the bars
+                    bottom=bottom_stack,  # Start at the current stack height
+                    alpha=0.8,
+                    color=color_dict.get(taxon, 'gray')  # Use color from dictionary or default to gray
+                )
+                # Update the stack height
+                bottom_stack += heights
+
+            # Customize x-axis
+            ax1.set_xticks(x)
+            ax1.set_xticklabels(dates, rotation=45)
+            ax1.set_ylabel("Relative Abundance")
+            ax1.set_xlabel("Date")
+
+            # Do not add any legends to individual plots
+            ax1.legend().remove()
+
+            # Display the plot
+            plt.title(f"Stacked Bar Plot of Relative Abundance by Date for Size Code: {size_code}, Depth: {depth}")
+            plt.tight_layout()
+            plt.savefig(f'outputs/{comm}/stacked_bar_plot_size_code_{size_code}_depth_{depth}.png', dpi=300, bbox_inches='tight')
+            plt.show()
+
+    # Create a single legend figure for all depths
+    fig_legend = plt.figure(figsize=(10, 1))
+    legend_handles = [
+        plt.Line2D([0], [0], color=color_dict[taxon], lw=10, label=format_taxa_label(taxon))
+        for taxon in unique_taxa
+    ]
+    fig_legend.legend(
+        handles=legend_handles,
+        loc="center",
+        ncol=5,
+        title=level  # Use the level name as the legend title
+    )
+    plt.tight_layout()
+    plt.savefig(f"outputs/{comm}/legend_for_all_depths.png", dpi=300, bbox_inches='tight')
+    plt.show()
+
+
+
+
+def plot_asv_depth_distribution(feature_id_summary):
+    # Preparing data for plotting
+    depths = ["Depth_1", "Depth_5", "Depth_10", "Depth_30", "Depth_60"]
+    depth_counts = {depth: [] for depth in depths}
+    feature_ids = []
+
+    for entry in feature_id_summary:
+        feature_id, _, entry_depths, _, _ = entry
+        feature_ids.append(feature_id)
+
+        # Assign depth presence (1 if present, 0 otherwise)
+        for depth in depths:
+            if depth in entry_depths:
+                depth_counts[depth].append(1)
+            else:
+                depth_counts[depth].append(0)
+
+    # Creating DataFrame for easy plotting
+    df = pd.DataFrame(depth_counts, index=feature_ids)
+
+    # Plotting a stacked bar chart
+    ax = df.plot(kind="bar", stacked=True, figsize=(15, 8), cmap="viridis", edgecolor='none')
+
+    # Adding labels and title
+    plt.xlabel("Feature IDs (ASVs)")
+    plt.ylabel("Depth Presence (1 = Present, 0 = Absent)")
+    plt.title("Depth Distribution of ASVs")
+    plt.xticks(ticks=range(len(feature_ids)), labels=feature_ids, rotation=90, fontsize=8)
+    plt.legend(title="Depth", bbox_to_anchor=(1.05, 1), loc='upper left')
+    plt.tight_layout()
+    plt.show()
+
+# Function to filter top ASVs based on criteria
+def filter_top_asvs(feature_id_summary, method="top_W_sum", n=50):
+    if method == "top_W_sum":
+        # Select top ASVs by highest W sum
+        sorted_summary = sorted(feature_id_summary, key=lambda x: x[4], reverse=True)
+        return sorted_summary[:n]
+    elif method == "most_depths":
+        # Select ASVs that appear in the most depths
+        sorted_summary = sorted(feature_id_summary, key=lambda x: len(x[2]), reverse=True)
+        return sorted_summary[:n]
+    elif method == "random":
+        # Randomly select ASVs
+        return random.sample(feature_id_summary, min(n, len(feature_id_summary)))
+    else:
+        raise ValueError("Invalid method. Choose from 'top_W_sum', 'most_depths', or 'random'.")
+
+# Updated heatmap function to show distinct W values for each depth considering only "Trueonly" files
+def plot_asv_heatmap(comm, feature_id_summary, file_filter=None, directory_path=None, n=50):
+    """
+    Plots a heatmap of W values for ASVs across depths, considering only files that match the filter condition.
+
+    Args:
+    - comm: The community type, which is used to specify the directory for input files.
+    - feature_id_summary: The feature summary generated by count_feature_id_presence_with_depth_and_W.
+    - file_filter: Optional string to filter the filenames considered (e.g., "WSLSL" or "WSL").
+                   If None, all files are considered.
+    - directory_path: Optional base directory for locating the ANCOM files.
+
+    Returns:
+    - None (displays the heatmap)
+    """
+    # Filter top ASVs based on selected method
+    top_asvs_summary = filter_top_asvs(feature_id_summary, method="top_W_sum", n=n)
+
+    # Preparing data for heatmap
+    depths = ["Depth_1", "Depth_5", "Depth_10", "Depth_30", "Depth_60"]
+    taxonomic_assignments = {}
+    w_values_dict = {}
+
+    for entry in top_asvs_summary:
+        feature_id, _, entry_depths, files, _ = entry
+        taxonomic_label = feature_id  # Default to feature_id if no taxonomic assignment is found
+
+        # Create dictionary to hold W values per depth for this ASV
+        w_values_per_depth = {depth: 0 for depth in depths}
+
+        for file_path in files:
+            # Apply file filter condition if specified
+            if file_filter and file_filter not in file_path:
+                continue
+
+            # Adjust the file path to include the community subdirectory
+            if directory_path:
+                full_file_path = os.path.join(directory_path, 'ANCOM', comm, os.path.basename(file_path))
+            else:
+                full_file_path = file_path
+
+            # Extract depth from the file name
+            try:
+                depth_match = re.search(r"_D(1|5|10|30|60)_", full_file_path)
+                if depth_match:
+                    depth = f"Depth_{depth_match.group(1)}"
+                else:
+                    continue  # Skip files without depth information
+            except Exception as e:
+                print(f"Error extracting depth from file {full_file_path}: {e}")
+                continue
+
+            # Load the CSV to extract the correct W value and taxonomic assignment for that feature_id
+            try:
+                df = pd.read_csv(full_file_path)
+                if 'feature_id' in df.columns and 'W' in df.columns:
+                    # Sum the W values for the given feature_id in that file for the specific depth
+                    w_value_sum = df[df['feature_id'] == feature_id]['W'].sum()
+
+                    # Store W sum for the current depth
+                    w_values_per_depth[depth] += w_value_sum
+
+                    # Extract taxonomic assignment
+                    if comm == 'chloroplast':
+                        prtaxon = df[df['feature_id'] == feature_id]['PRTaxon'].values[0] if 'PRTaxon' in df.columns else None
+                        if pd.notna(prtaxon):
+                            levels = prtaxon.split('|')
+                            last_identified = levels[-1]
+                            if last_identified in ["Unassigned", "N/A", "", "unidentified"] and len(levels) > 1:
+                                last_identified = levels[-2]
+                            taxonomic_label = last_identified
+                    else:
+                        # Original logic for non-chloroplast data
+                        genus = df[df['feature_id'] == feature_id]['Genus'].values[0] if 'Genus' in df.columns else None
+                        species = df[df['feature_id'] == feature_id]['Species'].values[0] if 'Species' in df.columns else None
+                        family = df[df['feature_id'] == feature_id]['Family'].values[0] if 'Family' in df.columns else None
+                        taxon = df[df['feature_id'] == feature_id]['Taxon'].values[0] if 'Taxon' in df.columns else None
+
+                        # Normalize values for comparison
+                        def normalize_taxonomic_label(label):
+                            return label if pd.notna(label) and label not in ["Unassigned", "N/A", "", "unidentified"] else None
+
+                        genus = normalize_taxonomic_label(genus)
+                        species = normalize_taxonomic_label(species)
+                        family = normalize_taxonomic_label(family)
+
+                        # Assign taxonomic label based on the given preference
+                        if species and genus:
+                            taxonomic_label = f"{genus} {species}"
+                        elif genus:
+                            taxonomic_label = genus
+                        elif family:
+                            genus_label = genus if genus else "unidentified"
+                            taxonomic_label = f"{family} ({genus_label})"
+                        elif taxon:
+                            levels = taxon.split('; ')
+                            last_identified = ""
+                            next_unassigned = ""
+                            for i, level in enumerate(levels):
+                                if level.split("__")[1] not in ["Unassigned", "N/A", "", "unidentified"]:
+                                    last_identified = level
+                                else:
+                                    next_unassigned = level
+                                    break
+                            if last_identified:
+                                taxonomic_label = f"{last_identified}; {next_unassigned}" if next_unassigned else last_identified
+            except Exception as e:
+                print(f"Error reading file {full_file_path}: {e}")
+
+        # Store the W values for each depth under the corresponding taxonomic label
+        if taxonomic_label in w_values_dict:
+            for depth in depths:
+                w_values_dict[taxonomic_label][depth] += w_values_per_depth[depth]
+        else:
+            w_values_dict[taxonomic_label] = w_values_per_depth
+
+    # Creating DataFrame for easy plotting
+    heatmap_df = pd.DataFrame(w_values_dict).T  # Transpose to have taxonomic labels as rows
+    heatmap_df.columns = depths
+
+    # Plotting the heatmap
+    plt.figure(figsize=(15, 10))
+    sns.heatmap(heatmap_df, cmap="YlGnBu", annot=True, fmt=".1f", linewidths=0.5, cbar_kws={'label': 'Sum of W Values per Depth'})
+    plt.xlabel("Depth")
+    plt.ylabel("Taxonomic Assignments (Genus, Species, or Family)")
+    plt.title("Heatmap of Top Taxonomic Sum of W Values Across Depths (Filtered by File Name)" if file_filter else "Heatmap of Top Taxonomic Sum of W Values Across Depths")
+    plt.tight_layout()
+
+    # Save the plot
+    plt.savefig('outputs/'+comm+'/ancom_heatmap_plot.png', dpi=300)  # Save the plot to a file
+
+    # Show the plot
+    plt.show()
