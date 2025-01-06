@@ -41,6 +41,7 @@ from skbio import DistanceMatrix
 from scipy.spatial.distance import cdist
 from skbio.stats.composition import clr
 from skbio.stats.composition import ancom
+from skbio.diversity.alpha import shannon
 import scipy.stats as stats
 import statsmodels.api as sa
 import statsmodels.formula.api as sfa
@@ -251,6 +252,11 @@ def make_defract(all_md, separated):
 
     newseparated["rank"] = newseparated.groupby("sampleid")["ratio"].rank(method="average", ascending=False)
     newseparated["ranktot"] = newseparated['rank'] / newseparated['nASVs']
+
+    #calculate shannon diversity index
+    grouped = newseparated.groupby('sampleid')['feature_frequency'].apply(list)
+    diversity = grouped.apply(shannon)
+    newseparated['shannon_diversity'] = newseparated['sampleid'].map(diversity)
 
     return newseparated
 
