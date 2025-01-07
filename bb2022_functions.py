@@ -1011,7 +1011,10 @@ def apply_replacement(df, column_to_map, column_to_update):
                       '7338e9edfef034ec21924ff03d3f4417': 'Synechococcus_CC9902',
                       '9dbe1d31f92323dcbdcc77903c6bba89': 'Unidentified Chrysophyceae',
                       'fcc8273752120d2dc6503688d9986f2e': 'Melanoseris',
-                      'd64d4fd57ebe3985f0fbc3f68fd18aa0': 'Unidentified Caenarcaniphilales'}
+                      'd64d4fd57ebe3985f0fbc3f68fd18aa0': 'Unidentified Caenarcaniphilales',
+                      'f75a7ff2740c7af21f310955d1fe0528' :'Uncultured Thioglobaceae',
+                      '15949af7fbc59962388dce15963f9cec': 'Uncultured Nitrincolaceae',
+                      '5a94578dd1d7cdd039a52f1c7079f874': 'Uncultured Flavobacteriaceae'}
     # Create a new column based on the mapping
     updated_column = df[column_to_map].map(replacement_dict).fillna(df[column_to_update])
 
@@ -2777,6 +2780,8 @@ def plot_nutrients(df, depth):
     nutrients = df[df['variable'] != 'Chlorophyll A']
     chlorophyll = df[df['variable'] == 'Chlorophyll A']
 
+    maxvals = df.loc[df.groupby('variable')['value'].idxmax()]
+
     fig, ax1 = plt.subplots(figsize=(15, 7))
     sns.lineplot(
         data=nutrients,
@@ -2803,6 +2808,7 @@ def plot_nutrients(df, depth):
     plt.savefig(f'outputs/{depth}_nutrients_chla.png')
     plt.show()
 
+    return maxvals
 
 # Updated heatmap function to show distinct W values for each depth considering only "Trueonly" files
 def plot_asv_heatmap(comm, feature_id_summary, file_filter=None, directory_path=None, n=50):
