@@ -1539,7 +1539,14 @@ def run_ancom(comm, separated, sfdclr, depth, ancomcol):
     return DAtaxonomy, DARejected_SC, prcentile
 
 
-def run_ancoms(comm, separated, sfdclr, depth, ancomcol):
+def run_ancoms(comm, separated, sfdclr, depth, ancomcol, threshold=0):
+    #create a new df where we remove the low abundance ASVs optionally
+    news2 = newseparated.drop(newseparated[(newseparated['ratio'] <threshold )].index)
+
+    #re-calculate ratios when removing chloroplast for 16S
+    news2['Total'] = news2['feature_frequency'].groupby(news2['sampleid']).transform('sum')
+    news2['ratio'] = news2['feature_frequency']/news2['Total']
+
     #sfd is used to assign group labels to the samples
     sfd=separated[separated.depth==depth]
     df_ancom = sfd[['sampleid', ancomcol]].copy()
@@ -2753,6 +2760,50 @@ def filter_top_asvs(feature_id_summary, method="top_W_sum", n=50):
     else:
         raise ValueError("Invalid method. Choose from 'top_W_sum', 'most_depths', or 'random'.")
 
+
+#for plotting the metadata
+def plot_nutrients(df, depth):
+    if depth == 60:
+        df = df.loc[df['depth'] == 60]
+    else:
+        df = df.loc[df['depth'] != 60]
+
+    df = df[['weekn', 'depth', 'Phosphate', 'Silicate', 'Nitrate',
+           'Ammonia', 'Chlorophyll A']]
+    df.rename(columns={'Temperature_x': 'Temperature'},
+              inplace= True)
+    df = df.melt(id_vars=['weekn', 'depth'])
+
+    nutrients = df[df['variable'] != 'Chlorophyll A']
+    chlorophyll = df[df['variable'] == 'Chlorophyll A']
+
+    fig, ax1 = plt.subplots(figsize=(15, 7))
+    sns.lineplot(
+        data=nutrients,
+        x="weekn", y="value",
+        hue='variable', palette='viridis', ax=ax1
+    )
+    ax1.set_ylabel("Nutrients (Phosphate, Silicate, Nitrate, Ammonia)")
+    ax1.legend(title="Nutrients", bbox_to_anchor=(1.05, 1), loc='upper left')
+
+    # Second y-axis for Chlorophyll A
+    ax2 = ax1.twinx()
+    sns.lineplot(
+        data=chlorophyll,
+        x="weekn", y="value",
+        color='red', label='Chlorophyll A', ax=ax2
+    )
+    ax2.set_ylabel("Chlorophyll A")
+    ax2.legend(title="Chlorophyll A", bbox_to_anchor=(1.05, 0.8), loc='upper left')
+
+    # Labels and save
+    ax1.set_xlabel("Week Number")
+    plt.title(f'Nutrients and Chlorophyll A in depths {depth}')
+    plt.tight_layout()
+    plt.savefig(f'outputs/{depth}_nutrients_chla.png')
+    plt.show()
+
+
 # Updated heatmap function to show distinct W values for each depth considering only "Trueonly" files
 def plot_asv_heatmap(comm, feature_id_summary, file_filter=None, directory_path=None, n=50):
     """
@@ -2886,3 +2937,33 @@ def plot_asv_heatmap(comm, feature_id_summary, file_filter=None, directory_path=
 
     # Show the plot
     plt.show()
+
+#this function was debugged by chatgpt:
+    forMIMARKS= newseparated[["sampleid", "time_string_x", "size_code", "depth"]].drop_duplicates()
+    size_fraction_mapping = {
+        'L': '>3µm',
+        'S': '0.2-3µm',
+        'W': '>0.2µm',
+        'P': 'Pooled',
+        'SL': 'NA'
+    }
+
+    # Create the new column 'size_fraction' based on the mapping
+def make_MIMARKS(newseparated):
+    forMIMARKS= newseparated[["sampleid", "time_string_x", "size_code", "depth"]].drop_duplicates()
+    size_fraction_mapping = {
+        'L': '>3µm',
+        'S': '0.2-3µm',
+        'W': '>0.2µm',
+        'P': 'Pooled',
+        'SL': 'NA'
+    }
+
+    # Create the new column 'size_fraction' based on the mapping
+    forMIMARKS = forMIMARKS[forMIMARKS['size_code'] != 'SL']
+    forMIMARKS['size_fraction'] = forMIMARKS['size_code'].map(size_fraction_mapping)
+    forMIMARKS.to_csv('forMIMARKS.csv', index=False)
+    forMIMARKS = forMIMARKS[forMIMARKS['size_code'] != 'SL']
+    forMIMARKS['size_fraction'] = forMIMARKS['size_code'].map(size_fraction_mapping)
+
+    forMIMARKS.to_csv('forMIMARKS.csv', index=False)
