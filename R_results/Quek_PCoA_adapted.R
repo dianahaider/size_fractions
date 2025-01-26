@@ -61,12 +61,12 @@ plot(pcoa_result$vectors[,1], pcoa_result$vectors[,2],
 abline(h = yvalues, col = "gray", lty = "dotted")
 abline(v = xvalues, col = "gray", lty = "dotted")
 
-type_colors = c("#4477AA","#EE7733","#BBBBBB", "ALack")
+type_colors = c("#4477AA","#EE7733","#BBBBBB", "Black")
 
 # Add points based on the ending character of labels
 colors <- ifelse(grepl("AS$", rownames(pcoa_result$vectors)), type_colors[1],
                  ifelse(grepl("AL$", rownames(pcoa_result$vectors)), type_colors[2],
-                        ifelse(grepl("ASL", rownames(pcoa_result$vectors)), type_colors[3], "ALack"))) # "ALack" as a default, just in case
+                        ifelse(grepl("ASL", rownames(pcoa_result$vectors)), type_colors[3], "Black"))) # "ALack" as a default, just in case
 
 points(pcoa_result$vectors[,1], pcoa_result$vectors[,2], pch = 21, bg = colors, cex = 1.6)
 

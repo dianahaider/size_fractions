@@ -1,1 +1,0 @@
-{"file": "https://raw.githubusercontent.com/dianahaider/size_fractions/main/csvs/chloroplast/PRSpecies_d10_relab.csv", "name": "chloroplastPRSpecies", "header": 0, "separator": ",", "skip": 0, "meta": [{"type": "id", "index": 0, "name": "Name"}, {"type": "integer", "index": 4, "name": "Rel. ab."}], "sets": [{"format": "binary", "start": 1, "end": 3}]}

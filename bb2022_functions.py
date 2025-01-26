@@ -179,8 +179,10 @@ def make_defract(all_md, separated):
     all_md["size_code"] = all_md["size_code"].fillna('W')
 
     #only keep values from weeks 1 to 16
-    sep_SL = all_md[all_md.size_code != "W"]
-    sep_SL = all_md[all_md.size_code != "P"]
+    sep_SL = all_md[
+        (all_md.size_code != "W") &
+        (all_md.size_code != "P")
+    ]
     sep_SL = sep_SL.drop(sep_SL[sep_SL.weekn > 16].index)
 
     #sum [DNA] of small and large size fractions
@@ -198,8 +200,10 @@ def make_defract(all_md, separated):
     sepSLRA = pd.merge(separated, sep_SL, on=['sampleid'], how='left') #all_md is the metadata file
 
     #exclude ASVs from the whole water
-    sep_SLRA = sepSLRA[separated.size_code != "W"]
-    sep_SLRA = sepSLRA[separated.size_code != "P"]
+    sep_SLRA = sepSLRA[
+        (sepSLRA.size_code != 'W') &
+        (sepSLRA.size_code != 'P')
+    ]
 
     #calculate corrected per sample ratio, and corrected feature frequency of de-fractionated samples
     sep_SLRA['Newfeature_frequency'] = sep_SLRA['feature_frequency'] * sep_SLRA['DNApr']
@@ -257,6 +261,22 @@ def make_defract(all_md, separated):
     grouped = newseparated.groupby('sampleid')['feature_frequency'].apply(list)
     diversity = grouped.apply(shannon)
     newseparated['shannon_diversity'] = newseparated['sampleid'].map(diversity)
+
+    #calculate dnaconc of SL (debugged by chatGPT)
+    cleaned_data = newseparated.drop_duplicates(subset=["weekn", "depth", "date", "size_code", "[DNA]ng/ul"])
+
+    sl_fill_values = (
+        cleaned_data[cleaned_data["size_code"].isin(["S", "L"])]
+        .groupby(["weekn", "depth", "date"], as_index=False)["[DNA]ng/ul"]
+        .sum()
+    )
+    sl_fill_values["size_code"] = "SL"
+    newseparated.loc[
+        (newseparated["size_code"] == "SL") & (newseparated["[DNA]ng/ul"].isna()),
+        "[DNA]ng/ul",] = newseparated.merge(
+        sl_fill_values,
+        on=["weekn", "depth", "date", "size_code"],
+        how="left")["[DNA]ng/ul_y"]
 
     return newseparated
 
@@ -490,8 +510,10 @@ def timeseries_fid(comm, newseparated, f_id, scl, depth):
     g = sns.lineplot(x="weekn", y="ratio", data=sel_cols, hue='size_code',
                      palette=palette_dict, marker='o')
 
-
-    sns.move_legend(g, "upper left", bbox_to_anchor=(1, 1))
+    if g.get_legend() is not None:
+        sns.move_legend(g, "upper left", bbox_to_anchor=(1, 1))
+    else:
+        print("No legend attached to the plot.")
 
     g.set_xticks(np.arange(1, 16.5, 1))
     g.figure.set_size_inches(5,3.5)
@@ -512,6 +534,9 @@ def timeseries_fid(comm, newseparated, f_id, scl, depth):
 def taxbarplot(comm, table, level, depth, topn, colrow): #separated is the df, #level is a string of taxonomic level column name, depth is an integer
     if comm == 'chloroplast':
         level = 'PRTaxon'
+
+    table.loc[table[level].isin(['Unassigned', 'g__uncultured', 's__uncultured']), level] = table['feature_id']
+
 
     #get a list of top taxa to provide the palette for the visualisation
     toptaxa = table[['feature_frequency', 'Taxon', 'size_code', 'depth','weekn', level]].copy()
@@ -569,6 +594,7 @@ def taxbarplot(comm, table, level, depth, topn, colrow): #separated is the df, #
     fig.update_xaxes(type='category', dtick=1)
     fig.update_layout(
         #title= text="Relative abundance of top"+str(topn) + level + 'observed at Depth' + str(depth),
+        bargap=0.1,
         yaxis_title="Relative abundance",
         xaxis_title="Size fraction",
         legend_title=level,
@@ -780,22 +806,27 @@ def pcaplot(separated, depth, comm, columnperm, spc, colrow):
     plot_df2['PCo 1'] = pc1v
     plot_df2['PCo 2'] = pc2v
     plot_df2.rename(columns={'Size code': 'size_code'}, inplace=True)
-    plot_df2.to_csv('R_results/R_testing_vis/'+str(depth)+comm+'for_R.csv')
+    plot_df2.to_csv('R_results/R_testing_vis/'+str(depth)+'_'+comm+'for_R.csv')
 
     return pca, pca_features, sfdclr, distance_matrix
 
-def dnacon(newseparated, depth='all'):
+def dnacon(newseparated, depth='all', includeSL=True):
     if depth != 'all':
         df=newseparated[newseparated.depth==depth]
 
     sorted_data = newseparated[["weekn", "[DNA]ng/ul", "size_code",'depth',
                                 'date']].sort_values(by=["weekn", "size_code", 'depth'])
-    filtered_df = sorted_data[sorted_data["size_code"] != "SL"]
+    if includeSL == False:
+        filtered_df = sorted_data[sorted_data["size_code"] != "SL"]
+    else:
+        filtered_df = sorted_data
     filtered_df.drop_duplicates().sort_values('[DNA]ng/ul')
 
-    sizecodes = ['S', 'L', 'W', 'SL']
+    sizecodes = ['Small', 'Large', 'Whole', 'Small + Large', 'P']
     palette_colors = sns.color_palette()
     palette_dict = {sizecode: color for sizecode, color in zip(sizecodes, palette_colors)}
+
+    filtered_df["size_code"] = filtered_df["size_code"].map({'S': 'Small', 'L': 'Large', 'W': 'Whole', 'SL':'Small + Large'})
 
     plt.figure(figsize=(12, 6))
     sns.barplot(
@@ -803,14 +834,15 @@ def dnacon(newseparated, depth='all'):
         x="date",
         y="[DNA]ng/ul",
         hue="size_code",
-        palette=palette_dict
+        palette=palette_dict,
+        hue_order = ["Whole", "Small + Large", "Small", "Large"]
     )
 
-    plt.xlabel("Time", fontsize=12)
-    plt.ylabel("DNA Concentration (ng/µl)", fontsize=12)
-    plt.legend(title="Size Code", fontsize=10, title_fontsize=12)
-    plt.xticks(fontsize=10)
-    plt.yticks(fontsize=10)
+    plt.xlabel("Date", fontsize=14, weight='bold')
+    plt.ylabel("DNA Concentration (ng/µl)", fontsize=14, weight='bold')
+    plt.legend(title="Size fraction", fontsize=10, title_fontsize=12)
+    plt.xticks(fontsize=12)
+    plt.yticks(fontsize=12)
 
     # Display the plot
     plt.tight_layout()
@@ -991,30 +1023,35 @@ def roll_avg(comm, table, depth, col, rollingavg=4):
 #replacement dictionary for unidentified genus ASV for top 20 ASVs
 def apply_replacement(df, column_to_map, column_to_update):
     #incl. 18s, 16s, chloro
-    replacement_dict = {'d2d1baa1b5487ea6da52cbe74835d92e': 'Unknown Dinophyceae', #18s
-                      '206758a86c52c6b169e5aea9769ee8a3': 'Unknown Dinophyceae',
-                      'f748ff93828e750fa8212b0c15ebb312': 'Unknown Dinophyceae',
-                      'ea8b5924f9a6a3cf089fb3f5c2ce00b1': 'Unknown Dinophyceae',
-                      'ec0cef5115e1a5e72ba718c19f44ac1e': 'Unknown Dinophyceae',
-                      '4ad35c9c4bc721fe9b6a63b0351e2527': 'Unknown Oligotracheae',
-                      '6071d3037004f54c1009530f02f29072': 'Uncultured synidiales',
-                      'd98e045a8124335c3f7422745eb649df': 'Unknown Dinophyceae',
-                      '43a118280860f972f1ee6c8813ee31ce': 'Uncultured Spirotrichea',
-                      '2949e15fb8d243ac547148c767e37505': 'Uncultured Choreotrichia',
-                      '8ec8ff981ab1011dda5943044363126d': 'Skeletonema',
-                      '334feb949bba92d67ce2d15e5517f30d': 'Pseudo-nitzschia',
-                      '352da949fea628d994cfa85942d0fd95': 'Pseudopedinella',
-                      'a6403cc4635bf5216e10d8724763fb72': 'Guinardia-like',
-                      '6c987094eb76bff568a4499383aa85e6': 'unclassified Cryptophyta',
-                      '1f6540f210aa24caa4354afe31cf8e7c': 'Guinardia-like',
-                      'd540a1d35a894bc8e3ce9e2413c61dd1': 'Obscuribacteraceae',
-                      '7338e9edfef034ec21924ff03d3f4417': 'Synechococcus_CC9902',
-                      '9dbe1d31f92323dcbdcc77903c6bba89': 'Unidentified Chrysophyceae',
-                      'fcc8273752120d2dc6503688d9986f2e': 'Melanoseris',
-                      'd64d4fd57ebe3985f0fbc3f68fd18aa0': 'Unidentified Caenarcaniphilales',
-                      'f75a7ff2740c7af21f310955d1fe0528' :'Uncultured Thioglobaceae',
-                      '15949af7fbc59962388dce15963f9cec': 'Uncultured Nitrincolaceae',
-                      '5a94578dd1d7cdd039a52f1c7079f874': 'Uncultured Flavobacteriaceae'}
+    replacement_dict = {'d2d1baa1b5487ea6da52cbe74835d92e': 'Unknown Dinophyceae*', #18s
+                      '206758a86c52c6b169e5aea9769ee8a3': 'Unknown Dinophyceae*',
+                      'f748ff93828e750fa8212b0c15ebb312': 'Unknown Dinophyceae*',
+                      'ea8b5924f9a6a3cf089fb3f5c2ce00b1': 'Unknown Dinophyceae*',
+                      'ec0cef5115e1a5e72ba718c19f44ac1e': 'Unknown Dinophyceae*',
+                      '4ad35c9c4bc721fe9b6a63b0351e2527': 'Unknown Oligotracheae*',
+                      '6071d3037004f54c1009530f02f29072': 'Uncultured synidiales*',
+                      'd98e045a8124335c3f7422745eb649df': 'Unknown Dinophyceae*',
+                      '579e5ddf97287a76bbbc58b1c42ef2f2': 'Unknown Dinophyceae*',
+                      '25679bd7ae54946d9d7348b7fde04db4': 'Unknown Dinophyceae*',
+                      '43a118280860f972f1ee6c8813ee31ce': 'Uncultured Spirotrichea*',
+                      '2949e15fb8d243ac547148c767e37505': 'Uncultured Choreotrichia*',
+                      '8ec8ff981ab1011dda5943044363126d': 'Cyclotella*',
+                      '334feb949bba92d67ce2d15e5517f30d': 'Pseudo-nitzschia*',
+                      '352da949fea628d994cfa85942d0fd95': 'Pseudopedinella*',
+                      'a6403cc4635bf5216e10d8724763fb72': 'Guinardia-like*',
+                      '6c987094eb76bff568a4499383aa85e6': 'Pseudopyrenomonadales*',
+                      '1f6540f210aa24caa4354afe31cf8e7c': 'Guinardia-like*',
+                      'd540a1d35a894bc8e3ce9e2413c61dd1': 'Unclassified vampirovibrio*',
+                      '7338e9edfef034ec21924ff03d3f4417': 'Synechococcus_CC9902*',
+                      '9dbe1d31f92323dcbdcc77903c6bba89': 'Unidentified Ochromonas*',
+                      'fcc8273752120d2dc6503688d9986f2e': 'Asteraceae*',
+                      'd64d4fd57ebe3985f0fbc3f68fd18aa0': 'Thermosynechococcus*',
+                      'f75a7ff2740c7af21f310955d1fe0528' :'Uncultured Thioglobaceae*',
+                      '15949af7fbc59962388dce15963f9cec': 'Uncultured Nitrincolaceae*',
+                      '5a94578dd1d7cdd039a52f1c7079f874': 'Uncultured Flavobacteriaceae*',
+                      'c76526dd2767e5090c0b1e42096ddb92': 'Uncultured Gimesiaceae*',
+                      'f98a2cdb11cbbef735b0705b57171c79': 'Uncultured Thecofilosea*',
+                      'f3aa3ab8b0d2ae94859675d59169af75': 'Unidentified Pucciniaceae*'}
     # Create a new column based on the mapping
     updated_column = df[column_to_map].map(replacement_dict).fillna(df[column_to_update])
 
@@ -1241,6 +1278,7 @@ def boxplot_depth(separated, comm, depth, ycolumn, yaxislabel='def'):
 
     sfd_LM = sfd[['size_code', 'nASVs']].copy()
     sfd_LM = sfd_LM.drop_duplicates()
+    print(sfd_LM['size_code'].unique())
     lm = sfa.ols('nASVs ~ C(size_code)', data=sfd_LM).fit()
     anova = sa.stats.anova_lm(lm)
     results = spPH.posthoc_ttest(sfd_LM, val_col='nASVs', group_col='size_code', p_adjust='holm')
@@ -1701,6 +1739,7 @@ def calcperc_defrac(comm, separated, level, dfplot_unweighted):
 
     level = level
 
+    #make an empty df to plot
     dfplot = pd.DataFrame(columns=['Depth', 'SF', 'NSF', 'DFr', 'Both'])
 
     for d in range(len(depths)):
@@ -2235,37 +2274,44 @@ def heatmap_top1(comm, sfd, level):
 
     toptaxa = sfd[['feature_id', 'feature_frequency', 'Taxon', 'size_code', 'depth', 'weekn', level]].copy()
     toptaxa.loc[toptaxa[level].isin(['Unassigned', 'uncultured+bacterium', 'g__uncultured']), level] = toptaxa['feature_id']
-
     toptaxa = toptaxa.drop_duplicates()
 
     df_agg = toptaxa.groupby(['size_code', level, 'depth', 'weekn']).agg({'feature_frequency': sum})
     topd = df_agg['feature_frequency'].groupby(['size_code', 'depth', 'weekn'], group_keys=False).nlargest(1).reset_index()
 
-    unique_genera = topd[level].unique()
-    type_dic = {genus: i for i, genus in enumerate(unique_genera[::-1], start=1)}
+    topd[level] = topd[level].str.replace('g__', '', regex=False)
 
+    genus_abundance = topd.groupby(level)['feature_frequency'].sum().sort_values(ascending=False)
+    unique_genera = genus_abundance.index.tolist()
+    unique_genera = sorted(unique_genera, reverse=True)
+
+    max_colors = plt.get_cmap('tab20').N
+    if len(unique_genera) > max_colors:
+        top_genera = unique_genera[:max_colors - 1]
+        topd[level] = topd[level].apply(lambda x: x if x in top_genera else 'Other')
+        unique_genera = ['Other']+ sorted(top_genera, reverse=True)
+
+    type_dic = {genus: i for i, genus in enumerate(unique_genera, start=1)}
     topd['comm_type'] = topd[level].map(type_dic)
 
+    size_order = ['W', 'SL', 'S', 'L']
+    depth_order = [f"{d}{s}" for d in ['1', '5', '10', '30', '60'] for s in size_order]
     topd["sc_weekn"] = topd["depth"].astype(str) + topd["size_code"]
+    topd['sc_weekn'] = pd.Categorical(topd['sc_weekn'], categories=depth_order, ordered=True)
 
-    topd = topd.sort_values(['depth', 'size_code'])
-
-    topdlist = topd['sc_weekn'].unique()
-
+    topd = topd.sort_values(['sc_weekn'])
     glue = topd.pivot(index="sc_weekn", columns="weekn", values="comm_type")
-    glue = glue.reindex(topdlist)
     glue = glue[glue.columns].astype(float)
 
     cmap = plt.get_cmap('tab20', len(type_dic))
 
     sns.set_style('ticks')
     plt.figure(figsize=(5, 5))
-
     ax = sns.heatmap(glue, fmt='f', yticklabels=True, linewidths=.5, cmap=cmap)
 
     colorbar = ax.collections[0].colorbar
     colorbar.set_ticks([val + 0.5 for val in range(len(type_dic))])
-    colorbar.set_ticklabels([genus for genus in type_dic.keys()])
+    colorbar.set_ticklabels(unique_genera)
 
     ax.axhline(4, ls='--')
     ax.axhline(8, ls='--')
@@ -2278,6 +2324,8 @@ def heatmap_top1(comm, sfd, level):
 
     plt.savefig(f'outputs/{comm}/heatmap_top1_{level}.png', bbox_inches='tight', dpi=300)
     plt.show()
+
+
 
 
 #subtitle = 'From Jan7 2022 to Apr27 2022'
@@ -2602,7 +2650,7 @@ def count_feature_id_presence_with_depth_and_W(directory_path, comm):
     return feature_id_summary
 
 
-def taxonomic_barplots(comm, table, depths, level, n=15):
+def taxonomic_barplots(comm, table, depths, level, n=15, include_other=True):
     if comm == 'chloroplast':
         level = 'PRSpecies'
 
@@ -2621,15 +2669,20 @@ def taxonomic_barplots(comm, table, depths, level, n=15):
     # Select the top n most abundant taxa globally
     top_taxa = global_abundance.head(n - 1).index.tolist()
 
-    # Create a new column to group less abundant taxa into "Other"
-    sfd_all['plot_taxa'] = sfd_all[level].apply(lambda x: x if x in top_taxa else 'Other')
+    if include_other:
+        # Create a new column to group less abundant taxa into "Other"
+        sfd_all['plot_taxa'] = sfd_all[level].apply(lambda x: x if x in top_taxa else 'Other')
+        unique_taxa = ['Other'] + top_taxa
+    else:
+        sfd_all = sfd_all[sfd_all[level].isin(top_taxa)]
+        sfd_all['plot_taxa']=sfd_all[level]
+        unique_taxa = top_taxa
 
     # Format taxa labels for the legend (remove prefixes and "__")
     def format_taxa_label(taxon):
         return taxon.split("__")[-1]
 
     # Create a global discrete color palette for taxa
-    unique_taxa = ['Other'] + top_taxa  # Ensure "Other" is always included and listed first
     n_taxa = len(unique_taxa)
 
     # Use a categorical colormap with up to 15 unique colors
@@ -2649,6 +2702,11 @@ def taxonomic_barplots(comm, table, depths, level, n=15):
             # Filter data for the current size_code
             top10d = sfd[sfd['size_code'] == size_code].copy()
             phyld = top10d.groupby(['weekn', 'date', 'plot_taxa'])['ratio'].sum().reset_index()
+
+            all_weeks = pd.DataFrame({'weekn': range(1, 17)})
+            phyld = phyld.merge(all_weeks, on='weekn', how='right')
+            phyld.fillna({'ratio': 0}, inplace=True)
+            phyld['date'].fillna('', inplace=True)  # or assign a placeholder value
 
             # Pivot the DataFrame to prepare for stacked bar plotting
             phyld_pivot = phyld.pivot(index=['weekn', 'date'], columns='plot_taxa', values='ratio').fillna(0).reset_index()
@@ -2682,18 +2740,19 @@ def taxonomic_barplots(comm, table, depths, level, n=15):
                 bottom_stack += heights
 
             # Customize x-axis
-            ax1.set_xticks(x)
-            ax1.set_xticklabels(dates, rotation=45)
-            ax1.set_ylabel("Relative Abundance")
-            ax1.set_xlabel("Date")
+            ax1.set_xticks(x[::2])
+            ax1.set_xticklabels(dates[::2], fontsize=21) #rotation=45)
+            ax1.set_ylabel("Relative Abundance", fontsize=24)
+            ax1.set_xlabel("Date", fontsize=24)
+            ax1.tick_params(axis='y', labelsize=21)
 
             # Do not add any legends to individual plots
             ax1.legend().remove()
 
             # Display the plot
-            plt.title(f"Stacked Bar Plot of Relative Abundance by Date for Size Code: {size_code}, Depth: {depth}")
+            #plt.title(f"Stacked Bar Plot of Relative Abundance by Date for Size Code: {size_code}, Depth: {depth}")
             plt.tight_layout()
-            plt.savefig(f'outputs/{comm}/stacked_bar_plot_size_code_{size_code}_depth_{depth}.png', dpi=300, bbox_inches='tight')
+            plt.savefig(f'outputs/{comm}/stacked_bar_plot_size_code_{size_code}_depth_{depth}_{include_other}.png', dpi=300, bbox_inches='tight')
             plt.show()
 
     # Create a single legend figure for all depths
@@ -2705,14 +2764,12 @@ def taxonomic_barplots(comm, table, depths, level, n=15):
     fig_legend.legend(
         handles=legend_handles,
         loc="center",
-        ncol=5,
+        ncol=1,
         title=level  # Use the level name as the legend title
     )
     plt.tight_layout()
     plt.savefig(f"outputs/{comm}/legend_for_all_depths.png", dpi=300, bbox_inches='tight')
     plt.show()
-
-
 
 
 def plot_asv_depth_distribution(feature_id_summary):
@@ -2789,6 +2846,7 @@ def plot_nutrients(df, depth):
         hue='variable', palette='viridis', ax=ax1
     )
     ax1.set_ylabel("Nutrients (Phosphate, Silicate, Nitrate, Ammonia)")
+    ax1.axis(ymin=0,ymax=45)
     ax1.legend(title="Nutrients", bbox_to_anchor=(1.05, 1), loc='upper left')
 
     # Second y-axis for Chlorophyll A
@@ -2799,6 +2857,7 @@ def plot_nutrients(df, depth):
         color='red', label='Chlorophyll A', ax=ax2
     )
     ax2.set_ylabel("Chlorophyll A")
+    ax2.axis(ymin=0,ymax=14)
     ax2.legend(title="Chlorophyll A", bbox_to_anchor=(1.05, 0.8), loc='upper left')
 
     # Labels and save
