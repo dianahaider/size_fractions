@@ -15,4 +15,4 @@ We determined the difference in community diversity between two size fractions o
 Run ```generate_data.sh``` from the cloned repo, then open the ```run_analysis.ipynb``` jupyter notebook and run all.
 
 ### Final repository
-
+Resulting files are saved in the outputs folder.
