@@ -7,6 +7,7 @@
 *.fastq
 *.fastq.gz
 *.qza
+*.cfg
 *.biom
 *.qzv
 *.bib

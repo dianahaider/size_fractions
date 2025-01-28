@@ -1,5 +1,0 @@
--bash: cutadapt: command not found
-This is cutadapt 4.4 with Python 3.10.12
-Command line parameters: --no-indels --pair-filter=any --error-rate=0.2 --discard-untrimmed -g ^GTGYCAGCMGCCGCGGTAA -G ^CCGYCAATTYMTTTRAGTTT -o 01-trimmed/V4V5-BB22.12C.LandS_S287_L001_R2_001_matched.R1.trimmed.fastq -p 01-trimmed/V4V5-BB22.12C.LandS_S287_L001_R2_001_matched.R2.trimmed.fastq 00-raw/V4V5-BB22.12C.LandS_S287_L001_R2_001_matched 00-raw/V4V5-BB22.12C.LandS_S287_L001_R2_001_matched
-Processing paired-end reads on 1 core ...
-ERROR: [Errno 2] No such file or directory: '00-raw/V4V5-BB22.12C.LandS_S287_L001_R2_001_matched'
