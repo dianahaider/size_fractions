@@ -12,7 +12,7 @@ We determined the difference in community diversity between two size fractions o
 | 18S           |               |
 
 ### Generate the data
-Run ```generate_data.sh``` from the cloned repo from the bash_scripts folder. This file include all the code used to process the raw FASTQ files. Then, open the ```bb2_sf_microbial.ipynb``` jupyter notebook to generate the figures and statistics which depend on bb2022_functions.py. The R code was used to generate the PCoA plots, and the PERMANOVA analyses.
+Run ```generate_data.sh``` from the cloned repo from the bash_scripts folder. This file include all the code used to process the raw FASTQ files. Then, open the ```bb2_sf_microbial.ipynb``` jupyter notebook to generate the figures and statistics which depend on ```bb2022_functions.py```. The R code was used to generate the PCoA plots, and the PERMANOVA analyses.
 
 ### Final repository
 Resulting files are saved in the outputs folder.
