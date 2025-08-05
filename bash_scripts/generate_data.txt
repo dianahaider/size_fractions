@@ -22,7 +22,7 @@ source activate qiime2-2023.5
 mkdir reads_qza
 
 #create manifest 
-source ~/projects/def-rbeiko/dhaider/bb_data/split_pipeline/eASV-pipeline-for-515Y-926R/qiime2-2022.2-DADA2-SILVA138.1-PR2_4.14.0/01-prok-scripts/P00-create-manifest.sh
+source ../bb_data/split_pipeline/eASV-pipeline-for-515Y-926R/qiime2-2022.2-DADA2-SILVA138.1-PR2_4.14.0/01-prok-scripts/P00-create-manifest.sh
 
 #import to qiime   
 qiime tools import --type 'SampleData[PairedEndSequencesWithQuality]' \
@@ -75,10 +75,10 @@ biom convert -i feature-table.biom -o feature-table.tsv --to-tsv
 
 
 #euks
-source ~/Documents/escuela/phd/eASV-pipeline-for-515Y-926R/qiime2-2022.2-DADA2-SILVA138.1-PR2_4.14.0/01-euk-scripts/E03-bbduk-cut-reads.sh 280 280
+source ../eASV-pipeline-for-515Y-926R/qiime2-2022.2-DADA2-SILVA138.1-PR2_4.14.0/01-euk-scripts/E03-bbduk-cut-reads.sh 280 280
 
 
-source ~/Documents/escuela/phd/eASV-pipeline-for-515Y-926R/qiime2-2022.2-DADA2-SILVA138.1-PR2_4.14.0/01-euk-scripts/E04-fuse-EUKs-withoutNs.sh 
+source ../eASV-pipeline-for-515Y-926R/qiime2-2022.2-DADA2-SILVA138.1-PR2_4.14.0/01-euk-scripts/E04-fuse-EUKs-withoutNs.sh 
 
 
 
